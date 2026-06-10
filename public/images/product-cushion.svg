@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="900" viewBox="0 0 900 900">
+  <rect width="900" height="900" fill="#FFFDF9"/>
+  <circle cx="450" cy="450" r="310" fill="#F3E6D8"/>
+  <ellipse cx="450" cy="515" rx="285" ry="170" fill="#E8C4B5"/>
+  <ellipse cx="450" cy="472" rx="265" ry="158" fill="#FFF3EC"/>
+  <ellipse cx="450" cy="478" rx="190" ry="106" fill="#D0A17F"/>
+  <ellipse cx="450" cy="448" rx="285" ry="162" fill="#F1CDBD"/>
+  <text x="450" y="452" text-anchor="middle" font-family="Georgia" font-size="54" fill="#BC8C75">veloura</text>
+</svg>
