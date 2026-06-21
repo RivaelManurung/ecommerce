@@ -30,6 +30,9 @@ jobs:
   deploy:
     name: SSH deploy
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
     # Auto-deploy only if the publish succeeded; manual runs always proceed.
     if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     steps:
@@ -76,6 +79,8 @@ jobs:
         env:
           IMAGE_PREFIX: ghcr.io/${{ steps.ns.outputs.owner }}/ekatalog
           IMAGE_TAG: ${{ github.event.inputs.image_tag || 'latest' }}
-          GHCR_USER: ${{ secrets.GHCR_USER }}
-          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
+          # The run's built-in token can pull this repo's own GHCR packages,
+          # so no separate GHCR PAT secret is needed.
+          GHCR_USER: ${{ github.actor }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DEPLOY_PATH: ${{ secrets.VPS_DEPLOY_PATH }}
