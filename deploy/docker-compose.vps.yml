@@ -1,0 +1,91 @@
+# E-Katalog stack for a VPS that already runs host nginx + certbot on 80/443.
+# Same model as the ui-generator deploy: pull GHCR images published by
+# .github/workflows/docker-publish.yml and run them. There is NO Caddy here —
+# host nginx terminates TLS and reverse-proxies the domain to the ports below.
+# Containers bind to 127.0.0.1 only, so they are never exposed directly.
+#
+# On the VPS (one-time): put this file + a `.env` in the deploy dir, then:
+#   docker compose -f docker-compose.vps.yml pull
+#   docker compose -f docker-compose.vps.yml up -d
+# The "Deploy to VPS" workflow does the pull+up automatically on each push to main.
+#
+# IMAGE_PREFIX/IMAGE_TAG select the images (e.g. ghcr.io/<owner>/ekatalog + latest).
+# Leave IMAGE_PREFIX unset to fall back to images built locally on the VPS.
+
+name: ekatalog
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks: [internal]
+
+  backend:
+    image: ${IMAGE_PREFIX:-ekatalog}-backend:${IMAGE_TAG:-local}
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PORT: "8080"
+      GIN_MODE: release
+      STORE_DRIVER: postgres
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable
+      JWT_SECRET: ${JWT_SECRET}
+      TOKEN_TTL_HOURS: ${TOKEN_TTL_HOURS:-24}
+      CORS_ALLOW_ORIGINS: https://${APP_DOMAIN}
+      APP_BASE_URL: https://${APP_DOMAIN}
+      SEED_DEMO: ${SEED_DEMO:-false}
+      SEED_ADMIN_NAME: ${SEED_ADMIN_NAME:-Store Admin}
+      SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL}
+      SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD}
+      SEED_SUPERADMIN_EMAIL: ${SEED_SUPERADMIN_EMAIL}
+      SEED_SUPERADMIN_PASSWORD: ${SEED_SUPERADMIN_PASSWORD}
+      PAYMENT_WEBHOOK_SECRET: ${PAYMENT_WEBHOOK_SECRET}
+      SHIPPING_ORIGIN_PROVINCE: ${SHIPPING_ORIGIN_PROVINCE:-DKI Jakarta}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      AUTH_RATE_LIMIT: ${AUTH_RATE_LIMIT:-10}
+      AUTH_RATE_WINDOW_SECONDS: ${AUTH_RATE_WINDOW_SECONDS:-60}
+    ports:
+      - "127.0.0.1:${BACKEND_HOST_PORT:-8082}:8080"
+    networks: [internal]
+
+  frontend:
+    image: ${IMAGE_PREFIX:-ekatalog}-frontend:${IMAGE_TAG:-local}
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_BASE_URL: https://${APP_DOMAIN}/api/v1
+    restart: unless-stopped
+    depends_on:
+      - backend
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      # Browser → public API (same-origin via nginx); SSR → backend over docker net.
+      NEXT_PUBLIC_API_BASE_URL: https://${APP_DOMAIN}/api/v1
+      INTERNAL_API_BASE_URL: http://backend:8080/api/v1
+    ports:
+      - "127.0.0.1:${FRONTEND_HOST_PORT:-3002}:3000"
+    networks: [internal]
+
+volumes:
+  pgdata:
+
+networks:
+  internal:
