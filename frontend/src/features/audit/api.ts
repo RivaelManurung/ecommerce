@@ -6,6 +6,8 @@ export type AuditListParams = {
   limit?: number;
   action?: string;
   entity?: string;
+  from?: string;
+  to?: string;
 };
 
 export function listAuditLogs(params: AuditListParams = {}) {

@@ -1,0 +1,18 @@
+# Caddy auto-provisions and renews HTTPS certificates for these domains.
+# Domains + ACME email are injected from the compose environment (./.env).
+
+{
+	email {$ACME_EMAIL}
+}
+
+# Storefront + admin (Next.js)
+{$APP_DOMAIN} {
+	encode gzip
+	reverse_proxy frontend:3000
+}
+
+# API (Go backend)
+{$API_DOMAIN} {
+	encode gzip
+	reverse_proxy backend:8080
+}

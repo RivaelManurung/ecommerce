@@ -1,0 +1,51 @@
+name: Deploy (Railway)
+
+# This project deploys to Railway (no Docker/VPS). Deployment is opt-in:
+#  • Manual: Actions → "Deploy (Railway)" → Run workflow.
+#  • Automatic on push to main: set repo variable RAILWAY_DEPLOY_ENABLED=true.
+#
+# Required configuration (Settings → Secrets and variables → Actions):
+#   Secret  RAILWAY_TOKEN            — a Railway project token (Project → Settings → Tokens)
+#   Var     RAILWAY_BACKEND_SERVICE  — backend service name (e.g. backend-ecommerce)
+#   Var     RAILWAY_FRONTEND_SERVICE — frontend service name (e.g. ecommerce)
+#   Var     RAILWAY_DEPLOY_ENABLED   — "true" to auto-deploy on push (optional)
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "What to deploy"
+        type: choice
+        default: both
+        options: [both, backend, frontend]
+  push:
+    branches: [main]
+
+concurrency:
+  group: deploy-railway
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: railway up
+    runs-on: ubuntu-latest
+    # Push deploys only when explicitly enabled; manual runs always proceed.
+    if: ${{ github.event_name == 'workflow_dispatch' || vars.RAILWAY_DEPLOY_ENABLED == 'true' }}
+    env:
+      RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+      TARGET: ${{ github.event.inputs.target || 'both' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
+
+      - name: Deploy backend
+        if: ${{ env.TARGET == 'both' || env.TARGET == 'backend' }}
+        working-directory: backend
+        run: railway up --ci --service "${{ vars.RAILWAY_BACKEND_SERVICE }}"
+
+      - name: Deploy frontend
+        if: ${{ env.TARGET == 'both' || env.TARGET == 'frontend' }}
+        working-directory: frontend
+        run: railway up --ci --service "${{ vars.RAILWAY_FRONTEND_SERVICE }}"

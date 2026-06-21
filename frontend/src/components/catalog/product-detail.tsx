@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronRight, Heart, Mail, MessageCircle, ShieldCheck, Truck, X, ZoomIn } from "lucide-react";
+import { Check, ChevronRight, Heart, Mail, MessageCircle, Minus, Plus, ShieldCheck, ShoppingBag, Truck, X, ZoomIn } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
@@ -9,6 +9,7 @@ import type { Product, Setting } from "@/lib/admin-types";
 import { formatIDR } from "@/lib/format";
 import { primaryImage, toWishlistItem } from "@/lib/catalog";
 import { useWishlistStore } from "@/lib/store/wishlist-store";
+import { useCartStore } from "@/lib/store/cart-store";
 import { waLink } from "@/lib/wa";
 import { cn } from "@/lib/utils/cn";
 import { CatalogCard } from "./catalog-card";
@@ -31,11 +32,48 @@ export function ProductDetail({
 
   const toggle = useWishlistStore((s) => s.toggle);
   const wished = useWishlistStore((s) => s.exists(product.id));
+  const addToCart = useCartStore((s) => s.add);
 
   const hasVariants = product.variants.length > 0;
   const prices = hasVariants ? product.variants.map((v) => v.price) : [product.basePrice];
   const minPrice = Math.min(...prices);
   const maxPrice = Math.max(...prices);
+
+  // Cart selection state. Variants are the purchasable units; default to the
+  // first in-stock one so the primary CTA is immediately actionable.
+  const firstSellable = product.variants.find((v) => v.stock > 0) ?? product.variants[0];
+  const [variantId, setVariantId] = useState(firstSellable?.id ?? "");
+  const [qty, setQty] = useState(1);
+  const [added, setAdded] = useState(false);
+  const [adding, setAdding] = useState(false);
+
+  const selected = product.variants.find((v) => v.id === variantId);
+  const selectedStock = selected?.stock ?? 0;
+  const selectedPrice = selected ? selected.price || product.basePrice : product.basePrice;
+  const canAddToCart = hasVariants && selectedStock > 0;
+  const cappedQty = Math.min(qty, Math.max(selectedStock, 1));
+
+  const onAddToCart = async () => {
+    if (!selected || selectedStock <= 0) return;
+    setAdding(true);
+    try {
+      await addToCart({
+        productId: product.id,
+        slug: product.slug,
+        name: product.name,
+        image: primaryImage(product).url,
+        variantId: selected.id,
+        variantName: selected.name,
+        price: selectedPrice,
+        quantity: cappedQty,
+        stock: selected.stock,
+      });
+      setAdded(true);
+      setTimeout(() => setAdded(false), 2000);
+    } finally {
+      setAdding(false);
+    }
+  };
 
   const wa = waLink(
     settings.whatsapp,
@@ -105,8 +143,92 @@ export function ProductDetail({
             <p className="mt-5 leading-7 text-[#737373]">{product.description}</p>
           ) : null}
 
+          {/* Variant + quantity + add to cart */}
+          {hasVariants ? (
+            <div className="mt-7 grid gap-4">
+              {product.variants.length > 1 ? (
+                <div>
+                  <p className="mb-2 text-xs font-bold uppercase tracking-[0.16em] text-[#A58C82]">Pilih Varian</p>
+                  <div className="flex flex-wrap gap-2">
+                    {product.variants.map((v) => {
+                      const out = v.stock <= 0;
+                      const isActive = v.id === variantId;
+                      return (
+                        <button
+                          key={v.id}
+                          type="button"
+                          disabled={out}
+                          onClick={() => {
+                            setVariantId(v.id);
+                            setQty(1);
+                          }}
+                          className={cn(
+                            "focus-ring rounded-xl border px-4 py-2.5 text-sm font-medium transition",
+                            isActive
+                              ? "border-[#C95F72] bg-[#FFF1F3] text-[#A9445A]"
+                              : "border-[#EEE7E2] bg-white text-[#5f5853] hover:border-[#E8BBC4]",
+                            out && "cursor-not-allowed opacity-45 line-through",
+                          )}
+                        >
+                          {v.name}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : null}
+
+              <div className="flex flex-wrap items-center gap-4">
+                <div className="inline-flex items-center rounded-xl border border-[#EEE7E2] bg-white">
+                  <button
+                    type="button"
+                    aria-label="Kurangi jumlah"
+                    onClick={() => setQty((q) => Math.max(1, q - 1))}
+                    disabled={cappedQty <= 1}
+                    className="focus-ring grid h-11 w-11 place-items-center rounded-l-xl text-[#5f5853] transition hover:text-[#A9445A] disabled:opacity-40"
+                  >
+                    <Minus size={16} />
+                  </button>
+                  <span className="grid h-11 w-12 place-items-center text-sm font-semibold tabular-nums">{cappedQty}</span>
+                  <button
+                    type="button"
+                    aria-label="Tambah jumlah"
+                    onClick={() => setQty((q) => Math.min(selectedStock || 1, q + 1))}
+                    disabled={cappedQty >= selectedStock}
+                    className="focus-ring grid h-11 w-11 place-items-center rounded-r-xl text-[#5f5853] transition hover:text-[#A9445A] disabled:opacity-40"
+                  >
+                    <Plus size={16} />
+                  </button>
+                </div>
+                <span className={cn("text-sm", selectedStock > 0 ? "text-[#60775C]" : "text-[#C0445E]")}>
+                  {selectedStock > 0 ? `Stok tersedia: ${selectedStock}` : "Stok habis"}
+                </span>
+              </div>
+
+              <button
+                type="button"
+                onClick={onAddToCart}
+                disabled={!canAddToCart || adding}
+                className={cn(
+                  "focus-ring inline-flex min-h-12 items-center justify-center gap-2 rounded-md px-6 text-sm font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-50",
+                  added ? "bg-[#0E7A53]" : "bg-[#C95F72] hover:bg-[#A9445A]",
+                )}
+              >
+                {added ? (
+                  <>
+                    <Check size={18} /> Ditambahkan ke keranjang
+                  </>
+                ) : (
+                  <>
+                    <ShoppingBag size={18} /> {canAddToCart ? "Tambah ke Keranjang" : "Stok Habis"}
+                  </>
+                )}
+              </button>
+            </div>
+          ) : null}
+
           {/* CTAs */}
-          <div className="mt-7 grid gap-3">
+          <div className="mt-5 grid gap-3">
             <a
               href={wa}
               target="_blank"

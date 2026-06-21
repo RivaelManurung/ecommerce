@@ -1,0 +1,100 @@
+# Production stack for a single VPS: Postgres + backend + frontend behind Caddy
+# (automatic HTTPS via Let's Encrypt). Variable values come from ./.env (kept on
+# the server, NOT committed). See .env.prod.example and DEPLOY.md.
+#
+#   docker compose -f docker-compose.prod.yml up -d        # build locally
+#   docker compose -f docker-compose.prod.yml pull && up   # use CI-built images
+
+name: ekatalog
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks: [internal]
+
+  backend:
+    image: ${BACKEND_IMAGE:-ekatalog-backend:local}
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PORT: "8080"
+      GIN_MODE: release
+      STORE_DRIVER: postgres
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable
+      JWT_SECRET: ${JWT_SECRET}
+      TOKEN_TTL_HOURS: ${TOKEN_TTL_HOURS:-24}
+      CORS_ALLOW_ORIGINS: https://${APP_DOMAIN}
+      APP_BASE_URL: https://${APP_DOMAIN}
+      SEED_DEMO: ${SEED_DEMO:-false}
+      SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL}
+      SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD}
+      SEED_SUPERADMIN_EMAIL: ${SEED_SUPERADMIN_EMAIL}
+      SEED_SUPERADMIN_PASSWORD: ${SEED_SUPERADMIN_PASSWORD}
+      PAYMENT_WEBHOOK_SECRET: ${PAYMENT_WEBHOOK_SECRET}
+      SHIPPING_ORIGIN_PROVINCE: ${SHIPPING_ORIGIN_PROVINCE:-DKI Jakarta}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      AUTH_RATE_LIMIT: ${AUTH_RATE_LIMIT:-10}
+      AUTH_RATE_WINDOW_SECONDS: ${AUTH_RATE_WINDOW_SECONDS:-60}
+    networks: [internal]
+
+  frontend:
+    image: ${FRONTEND_IMAGE:-ekatalog-frontend:local}
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_BASE_URL: https://${API_DOMAIN}/api/v1
+    restart: unless-stopped
+    depends_on:
+      - backend
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      # Browser → public API; SSR → backend over the internal docker network.
+      NEXT_PUBLIC_API_BASE_URL: https://${API_DOMAIN}/api/v1
+      INTERNAL_API_BASE_URL: http://backend:8080/api/v1
+    networks: [internal]
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      - backend
+      - frontend
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      APP_DOMAIN: ${APP_DOMAIN}
+      API_DOMAIN: ${API_DOMAIN}
+      ACME_EMAIL: ${ACME_EMAIL}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks: [internal]
+
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:
+
+networks:
+  internal:

@@ -9,6 +9,21 @@ export const loginSchema = z.object({
 });
 export type LoginValues = z.infer<typeof loginSchema>;
 
+// Customer storefront sign-up. Mirrors the backend RegisterRequest binding
+// (name 2-80, valid email, password 6-72).
+export const registerSchema = z.object({
+  name: z
+    .string()
+    .min(2, "Nama minimal 2 karakter")
+    .max(80, "Nama maksimal 80 karakter"),
+  email: z.string().min(1, "Email wajib diisi").email("Format email tidak valid"),
+  password: z
+    .string()
+    .min(6, "Password minimal 6 karakter")
+    .max(72, "Password maksimal 72 karakter"),
+});
+export type RegisterValues = z.infer<typeof registerSchema>;
+
 export const categorySchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters").max(80),
   description: z.string().max(1000).optional().default(""),
@@ -40,6 +55,7 @@ export const variantSchema = z.object({
   sku: z.string().max(60).optional().default(""),
   price: z.coerce.number().int().min(0, "Price cannot be negative").default(0),
   stock: z.coerce.number().int().min(0, "Stock cannot be negative").default(0),
+  weight: z.coerce.number().int().min(0, "Weight cannot be negative").max(100000).default(0),
 });
 export type VariantValues = z.infer<typeof variantSchema>;
 

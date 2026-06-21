@@ -89,7 +89,9 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           </div>
         </div>
         <nav className="flex flex-col gap-1 p-3">
-          {navItems.map((item) => {
+          {navItems
+            .filter((item) => !item.superAdminOnly || user?.role === "super_admin")
+            .map((item) => {
             const active = isActive(pathname, item.href);
             const Icon = item.icon;
             return (

@@ -1,6 +1,6 @@
 // Shared API types mirroring the Go backend contract (docs/workflow/02-backend-contract.md).
 
-export type Role = "admin" | "super_admin";
+export type Role = "admin" | "super_admin" | "customer";
 
 export interface User {
   id: string;
@@ -41,6 +41,7 @@ export interface ProductVariant {
   sku: string;
   price: number;
   stock: number;
+  weight: number;
 }
 
 export interface CategorySummary {

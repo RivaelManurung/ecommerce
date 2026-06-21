@@ -1,0 +1,111 @@
+name: Backend CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "backend/**"
+      - ".github/workflows/backend-ci.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "backend/**"
+      - ".github/workflows/backend-ci.yml"
+
+# Cancel superseded runs on the same ref to save CI minutes.
+concurrency:
+  group: backend-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Build · Vet · Test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: backend/go.mod
+          cache-dependency-path: backend/go.sum
+
+      - name: Verify go.mod is tidy
+        run: |
+          go mod tidy
+          git diff --exit-code -- go.mod go.sum
+
+      - name: gofmt
+        run: |
+          unformatted=$(gofmt -l .)
+          if [ -n "$unformatted" ]; then
+            echo "These files are not gofmt'd:"; echo "$unformatted"; exit 1
+          fi
+
+      - name: go vet
+        run: go vet ./...
+
+      - name: Build
+        run: go build ./...
+
+      - name: Test
+        run: go test ./...
+
+      - name: Race detector
+        run: go test -race ./...
+
+  postgres-smoke:
+    name: Postgres boot + migrate + seed
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: ekatalog
+          POSTGRES_PASSWORD: ekatalog
+          POSTGRES_DB: ekatalog
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      STORE_DRIVER: postgres
+      DATABASE_URL: postgres://ekatalog:ekatalog@localhost:5432/ekatalog?sslmode=disable
+      GIN_MODE: release
+      PORT: "8080"
+      SEED_DEMO: "true"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: backend/go.mod
+          cache-dependency-path: backend/go.sum
+
+      # Boots the real binary against Postgres so migrations + the production
+      # seed are exercised on the actual prod store (catches pg-only SQL bugs).
+      - name: Boot, migrate, seed, smoke
+        run: |
+          go build -o bin/api ./cmd/api
+          ./bin/api & APP_PID=$!
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:8080/health && break
+            sleep 1
+          done
+          echo
+          # Confirm it really used Postgres and the catalog seeded.
+          curl -sf http://localhost:8080/health | grep -q '"store":"postgres"'
+          count=$(curl -sf "http://localhost:8080/api/v1/public/products?limit=100" | grep -o '"id"' | wc -l)
+          echo "seeded public products: $count"
+          test "$count" -gt 0
+          kill "$APP_PID"

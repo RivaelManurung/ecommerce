@@ -33,7 +33,7 @@ export function VariantManager({
     formState: { errors, isSubmitting },
   } = useForm<VariantInput, unknown, VariantValues>({
     resolver: zodResolver(variantSchema),
-    defaultValues: { name: "", sku: "", price: 0, stock: 0 },
+    defaultValues: { name: "", sku: "", price: 0, stock: 0, weight: 0 },
   });
 
   async function onAdd(values: VariantValues) {
@@ -76,6 +76,7 @@ export function VariantManager({
                 <TH>SKU</TH>
                 <TH className="text-right">Price</TH>
                 <TH className="text-right">Stock</TH>
+                <TH className="text-right">Weight (g)</TH>
                 <TH className="text-right">Actions</TH>
               </TR>
             </THead>
@@ -86,6 +87,7 @@ export function VariantManager({
                   <TD className="text-zinc-500">{v.sku || "—"}</TD>
                   <TD className="text-right">{formatIDR(v.price)}</TD>
                   <TD className="text-right">{v.stock}</TD>
+                  <TD className="text-right">{v.weight || "—"}</TD>
                   <TD className="text-right">
                     <Button
                       variant="ghost"
@@ -108,7 +110,7 @@ export function VariantManager({
         )}
 
         <form onSubmit={handleSubmit(onAdd)} className="space-y-3 border-t border-zinc-100 pt-4" noValidate>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
             <div className="space-y-1.5">
               <Label htmlFor="v-name">Name</Label>
               <Input id="v-name" {...register("name")} />
@@ -127,6 +129,11 @@ export function VariantManager({
               <Label htmlFor="v-stock">Stock</Label>
               <Input id="v-stock" type="number" min={0} {...register("stock")} />
               {errors.stock && <p className="text-xs text-red-600">{errors.stock.message}</p>}
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="v-weight">Weight (g)</Label>
+              <Input id="v-weight" type="number" min={0} {...register("weight")} />
+              {errors.weight && <p className="text-xs text-red-600">{errors.weight.message}</p>}
             </div>
           </div>
           <div className="flex justify-end">

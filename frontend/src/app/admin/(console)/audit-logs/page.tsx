@@ -23,13 +23,15 @@ export default function AuditLogsPage() {
   const [error, setError] = useState<string | null>(null);
   const [action, setAction] = useState("");
   const [entity, setEntity] = useState("");
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
   const [page, setPage] = useState(1);
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const { data, meta } = await listAuditLogs({ page, limit: LIMIT, action, entity });
+      const { data, meta } = await listAuditLogs({ page, limit: LIMIT, action, entity, from: from || undefined, to: to || undefined });
       setItems(data);
       setMeta(meta);
     } catch (err) {
@@ -37,7 +39,7 @@ export default function AuditLogsPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, action, entity]);
+  }, [page, action, entity, from, to]);
 
   useEffect(() => {
     const t = setTimeout(load, 0);
@@ -76,10 +78,31 @@ export default function AuditLogsPage() {
           <option value="">All entities</option>
           <option value="product">Product</option>
           <option value="category">Category</option>
+          <option value="order">Order</option>
+          <option value="customer">Customer</option>
+          <option value="admin_user">Admin user</option>
+          <option value="coupon">Coupon</option>
+          <option value="review">Review</option>
+          <option value="stock">Stock</option>
           <option value="inquiry">Inquiry</option>
           <option value="setting">Setting</option>
           <option value="auth">Auth</option>
+          <option value="user">User</option>
         </Select>
+        <input
+          type="date"
+          value={from}
+          onChange={(e) => { setPage(1); setFrom(e.target.value); }}
+          aria-label="From date"
+          className="h-9 rounded-md border border-zinc-200 bg-white px-2 text-sm text-zinc-700 outline-none focus:border-zinc-400 sm:max-w-[150px]"
+        />
+        <input
+          type="date"
+          value={to}
+          onChange={(e) => { setPage(1); setTo(e.target.value); }}
+          aria-label="To date"
+          className="h-9 rounded-md border border-zinc-200 bg-white px-2 text-sm text-zinc-700 outline-none focus:border-zinc-400 sm:max-w-[150px]"
+        />
       </div>
 
       <Card>

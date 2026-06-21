@@ -3,11 +3,19 @@
 import { cloneElement, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { motion, useReducedMotion } from "framer-motion";
 import { ArrowLeft, Eye, EyeOff, Lock, Mail, ShieldCheck, Sparkles, Truck, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { premiumEase } from "@/lib/animations";
+import { login as loginRequest, register as registerRequest, googleLogin } from "@/features/auth/api";
+import { useAuthStore } from "@/lib/auth";
+import { useCartStore } from "@/lib/store/cart-store";
+import { useWishlistStore } from "@/lib/store/wishlist-store";
+import { ApiError } from "@/lib/api-client";
+import { GoogleSignInButton } from "@/components/auth/google-signin-button";
+import type { User as AuthUser } from "@/lib/admin-types";
 
 type AuthValues = { email: string; password: string; name?: string };
 
@@ -19,7 +27,11 @@ const perks = [
 
 export function AuthPage({ mode }: { mode: "login" | "register" }) {
   const reduceMotion = useReducedMotion();
+  const router = useRouter();
+  const setSession = useAuthStore((s) => s.setSession);
   const [showPassword, setShowPassword] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [serverError, setServerError] = useState<string | null>(null);
   const {
     register,
     handleSubmit,
@@ -27,6 +39,61 @@ export function AuthPage({ mode }: { mode: "login" | "register" }) {
   } = useForm<AuthValues>();
 
   const isLogin = mode === "login";
+
+  const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+
+  // Shared post-auth flow: persist session, merge guest cart/wishlist, redirect.
+  // A customer landing here from a guarded link is sent back afterwards; never
+  // bounce a customer into the admin area.
+  const finishAuth = async (result: { token: string; user: AuthUser }) => {
+    setSession(result.token, result.user);
+    await Promise.all([
+      useCartStore.getState().syncOnLogin(),
+      useWishlistStore.getState().syncOnLogin(),
+    ]);
+    const nextParam =
+      typeof window !== "undefined"
+        ? new URLSearchParams(window.location.search).get("next")
+        : null;
+    const redirectTo =
+      nextParam && nextParam.startsWith("/") && !nextParam.startsWith("/admin") ? nextParam : "/";
+    router.push(redirectTo);
+    router.refresh();
+  };
+
+  const onSubmit = async (values: AuthValues) => {
+    setServerError(null);
+    setSubmitting(true);
+    try {
+      const result = isLogin
+        ? await loginRequest({ email: values.email, password: values.password })
+        : await registerRequest({
+            name: values.name ?? "",
+            email: values.email,
+            password: values.password,
+          });
+      await finishAuth(result);
+    } catch (error) {
+      setServerError(
+        error instanceof ApiError ? error.message : "Terjadi kesalahan. Silakan coba lagi.",
+      );
+      setSubmitting(false);
+    }
+  };
+
+  const handleGoogle = async (idToken: string) => {
+    setServerError(null);
+    setSubmitting(true);
+    try {
+      const result = await googleLogin(idToken);
+      await finishAuth(result);
+    } catch (error) {
+      setServerError(
+        error instanceof ApiError ? error.message : "Gagal masuk dengan Google.",
+      );
+      setSubmitting(false);
+    }
+  };
 
   const motionProps = reduceMotion
     ? {}
@@ -109,7 +176,15 @@ export function AuthPage({ mode }: { mode: "login" | "register" }) {
                 : "Daftar gratis untuk pengalaman belanja yang lebih personal."}
             </p>
 
-            <form onSubmit={handleSubmit(() => undefined)} className="mt-8 space-y-4" noValidate>
+            <form onSubmit={handleSubmit(onSubmit)} className="mt-8 space-y-4" noValidate>
+              {serverError && (
+                <p
+                  role="alert"
+                  className="rounded-xl border border-[#E7B2BD] bg-[#FBEEF1] px-3.5 py-2.5 text-sm text-[#A9445A]"
+                >
+                  {serverError}
+                </p>
+              )}
               {!isLogin && (
                 <Field
                   label="Nama Lengkap"
@@ -175,7 +250,7 @@ export function AuthPage({ mode }: { mode: "login" | "register" }) {
                   <label className="inline-flex cursor-pointer items-center gap-2 text-[#737373]">
                     <input type="checkbox" className="h-4 w-4 accent-[#C95F72]" /> Ingat saya
                   </label>
-                  <Link href="/login" className="font-semibold text-[#A9445A] hover:underline">
+                  <Link href="/forgot-password" className="font-semibold text-[#A9445A] hover:underline">
                     Lupa password?
                   </Link>
                 </div>
@@ -187,14 +262,26 @@ export function AuthPage({ mode }: { mode: "login" | "register" }) {
                 </p>
               )}
 
-              <Button type="submit" className="mt-2 w-full">
-                {isLogin ? "Masuk" : "Buat Akun"}
+              <Button type="submit" className="mt-2 w-full" disabled={submitting}>
+                {submitting
+                  ? isLogin
+                    ? "Memproses…"
+                    : "Membuat akun…"
+                  : isLogin
+                    ? "Masuk"
+                    : "Buat Akun"}
               </Button>
             </form>
 
             <div className="my-7 flex items-center gap-4 text-xs uppercase tracking-[0.18em] text-[#B8AFA9]">
               <span className="h-px flex-1 bg-[#EEE7E2]" /> atau <span className="h-px flex-1 bg-[#EEE7E2]" />
             </div>
+
+            {googleClientId ? (
+              <div className="mb-6">
+                <GoogleSignInButton clientId={googleClientId} onCredential={handleGoogle} />
+              </div>
+            ) : null}
 
             <p className="text-center text-sm text-[#737373]">
               {isLogin ? "Belum punya akun? " : "Sudah punya akun? "}

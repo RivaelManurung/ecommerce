@@ -1,6 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Self-contained server output for small production Docker images.
+  output: "standalone",
   images: {
     remotePatterns: [
       {
@@ -11,14 +13,13 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
-      // Retired mock storefront routes → API-backed catalog.
+      // Retired mock storefront routes → API-backed catalog. NOTE: /cart and
+      // /checkout are real pages now and must NOT be redirected here.
       { source: "/shop", destination: "/catalog", permanent: false },
       { source: "/search", destination: "/catalog", permanent: false },
       { source: "/category/:slug", destination: "/catalog?category=:slug", permanent: false },
       { source: "/product/:slug", destination: "/catalog/:slug", permanent: false },
-      { source: "/cart", destination: "/catalog", permanent: false },
-      { source: "/checkout", destination: "/catalog", permanent: false },
-      { source: "/account", destination: "/login", permanent: false },
+      { source: "/account", destination: "/orders", permanent: false },
     ];
   },
 };

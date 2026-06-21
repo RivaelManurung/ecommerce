@@ -9,13 +9,19 @@ import type { User } from "./admin-types";
 
 const TOKEN_MAX_AGE = 60 * 60 * 24; // 24h, matches backend default TTL
 
+// Add the Secure attribute when served over HTTPS so the session cookie is never
+// sent over plain HTTP in production. (Local http://localhost stays cookie-able.)
+function secureFlag(): string {
+  return typeof location !== "undefined" && location.protocol === "https:" ? "; Secure" : "";
+}
+
 function writeCookie(token: string) {
   if (typeof document === "undefined") return;
-  document.cookie = `${TOKEN_COOKIE}=${encodeURIComponent(token)}; path=/; max-age=${TOKEN_MAX_AGE}; samesite=lax`;
+  document.cookie = `${TOKEN_COOKIE}=${encodeURIComponent(token)}; path=/; max-age=${TOKEN_MAX_AGE}; samesite=lax${secureFlag()}`;
 }
 function clearCookie() {
   if (typeof document === "undefined") return;
-  document.cookie = `${TOKEN_COOKIE}=; path=/; max-age=0; samesite=lax`;
+  document.cookie = `${TOKEN_COOKIE}=; path=/; max-age=0; samesite=lax${secureFlag()}`;
 }
 
 interface AuthState {
