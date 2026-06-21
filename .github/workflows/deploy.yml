@@ -42,7 +42,7 @@ jobs:
 
       # Ship the latest compose to the VPS deploy dir (keeps .env untouched).
       - name: Copy compose to VPS
-        uses: appleboy/scp-action@v0.1.7
+        uses: appleboy/scp-action@v1.0.0
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
