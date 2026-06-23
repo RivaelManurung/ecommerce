@@ -144,42 +144,42 @@ export function SiteHeader({
       </nav>
       <AnimatePresence>
         {open ? (
-        <motion.div className="fixed inset-0 z-50 bg-black/30 backdrop-blur-[2px] md:hidden" variants={drawerVariants} initial="hidden" animate="show" exit="exit" onClick={() => setOpen(false)}>
-          <motion.div
-            className="flex h-full w-[86%] max-w-sm flex-col bg-[#FFFDF9] shadow-2xl"
-            variants={drawerPanelVariants}
-            onClick={(event) => event.stopPropagation()}
-            role="dialog"
-            aria-modal="true"
-            aria-label="Menu navigasi"
-          >
-            <div className="flex items-center justify-between border-b border-[#EEE7E2] px-6 py-4">
-              <span className="font-serif-display text-3xl leading-none">{settings.companyName.split(" ")[0]}</span>
-              <button className="focus-ring grid h-10 w-10 place-items-center rounded-full hover:bg-[#FAF4EF]" aria-label="Tutup menu" onClick={() => setOpen(false)}>
-                <X />
-              </button>
-            </div>
-            <nav className="flex-1 overflow-y-auto px-6 py-5">
-              <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.16em] text-[#9B918A]">Kategori</p>
-              <div className="grid gap-2 text-sm font-semibold uppercase">
-                {nav.map((item) => (
-                  <Link key={item.href} href={item.href} className="rounded-lg border border-[#EEE7E2] bg-white px-4 py-3 transition hover:border-[#E8BBC4] hover:text-[#A9445A]" onClick={() => setOpen(false)}>
-                    {item.label}
-                  </Link>
-                ))}
+          <motion.div className="fixed inset-0 z-50 bg-black/30 backdrop-blur-[2px] md:hidden" variants={drawerVariants} initial="hidden" animate="show" exit="exit" onClick={() => setOpen(false)}>
+            <motion.div
+              className="flex h-full w-[86%] max-w-sm flex-col bg-[#FFFDF9] shadow-2xl"
+              variants={drawerPanelVariants}
+              onClick={(event) => event.stopPropagation()}
+              role="dialog"
+              aria-modal="true"
+              aria-label="Menu navigasi"
+            >
+              <div className="flex items-center justify-between border-b border-[#EEE7E2] px-6 py-4">
+                <span className="font-serif-display text-3xl leading-none">{settings.companyName.split(" ")[0]}</span>
+                <button className="focus-ring grid h-10 w-10 place-items-center rounded-full hover:bg-[#FAF4EF]" aria-label="Tutup menu" onClick={() => setOpen(false)}>
+                  <X />
+                </button>
               </div>
-            </nav>
-            <div className="grid gap-2 border-t border-[#EEE7E2] px-6 py-5">
-              <Link href={accountHref} onClick={() => setOpen(false)} className="inline-flex items-center justify-center gap-2 rounded-lg border border-[#EEE7E2] bg-white px-4 py-3 text-sm font-semibold transition hover:border-[#E8BBC4]">
-                <User size={16} /> {authed ? "Pesanan Saya" : "Masuk / Akun"}
-              </Link>
-              <a href={wa} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#0E7A53] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#0b6444]">
-                <MessageCircle size={16} /> Chat WhatsApp
-              </a>
-            </div>
+              <nav className="flex-1 overflow-y-auto px-6 py-5">
+                <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.16em] text-[#9B918A]">Kategori</p>
+                <div className="grid gap-2 text-sm font-semibold uppercase">
+                  {nav.map((item) => (
+                    <Link key={item.href} href={item.href} className="rounded-lg border border-[#EEE7E2] bg-white px-4 py-3 transition hover:border-[#E8BBC4] hover:text-[#A9445A]" onClick={() => setOpen(false)}>
+                      {item.label}
+                    </Link>
+                  ))}
+                </div>
+              </nav>
+              <div className="grid gap-2 border-t border-[#EEE7E2] px-6 py-5">
+                <Link href={accountHref} onClick={() => setOpen(false)} className="inline-flex items-center justify-center gap-2 rounded-lg border border-[#EEE7E2] bg-white px-4 py-3 text-sm font-semibold transition hover:border-[#E8BBC4]">
+                  <User size={16} /> {authed ? "Pesanan Saya" : "Masuk / Akun"}
+                </Link>
+                <a href={wa} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#0E7A53] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#0b6444]">
+                  <MessageCircle size={16} /> Chat WhatsApp
+                </a>
+              </div>
+            </motion.div>
           </motion.div>
-        </motion.div>
-      ) : null}
+        ) : null}
       </AnimatePresence>
     </header>
   );

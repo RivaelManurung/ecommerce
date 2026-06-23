@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
 :root {
+  /* Storefront theme */
   --background: #fffdf9;
   --foreground: #262626;
   --muted: #737373;
@@ -14,12 +15,30 @@
   --ivory: #fffdf9;
   --blush: #f8dde2;
   --rose: #c95f72;
-  --deep-rose: #a9445a;
   --sage: #dde8d5;
   --beige: #f3e6d8;
   --charcoal: #262626;
-  --muted: #737373;
-  --border: #eee7e2;
+}
+
+/* Admin panel — Shadcn design tokens */
+.admin-root {
+  --admin-bg: #ffffff;
+  --admin-sidebar-bg: #ffffff;
+  --admin-sidebar-width: 220px;
+  --admin-border: #e5e7eb;
+  --admin-muted: #6b7280;
+  --admin-muted-bg: #f9fafb;
+  --admin-accent: #f3f4f6;
+  --admin-accent-hover: #e5e7eb;
+  --admin-ring: #111827;
+  --admin-text: #111827;
+  --admin-text-muted: #6b7280;
+  --admin-success: #16a34a;
+  --admin-danger: #dc2626;
+  --admin-warning: #d97706;
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  font-feature-settings: "rlig" 1, "calt" 1;
+  -webkit-font-smoothing: antialiased;
 }
 
 /*

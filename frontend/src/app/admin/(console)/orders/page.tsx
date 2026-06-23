@@ -12,7 +12,7 @@ import { ErrorState, EmptyState, TableSkeleton } from "@/components/admin/data-s
 import { PaginationBar } from "@/components/admin/pagination-bar";
 import { OrderStatusBadge, PaymentBadge } from "@/components/admin/order-badges";
 import { formatDateTime, formatIDR } from "@/lib/format";
-import { Select } from "@/components/ui/select";
+import { AdminSelect } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
 import { Table, THead, TBody, TR, TH, TD } from "@/components/ui/table";
 
@@ -50,23 +50,24 @@ export default function AdminOrdersPage() {
       <PageHeader title="Orders" description="Customer orders from checkout." />
 
       <div className="flex">
-        <Select
+        <AdminSelect
           value={status}
-          onChange={(e) => {
+          onChange={(val) => {
             setPage(1);
-            setStatus(e.target.value);
+            setStatus(val);
           }}
-          className="sm:max-w-[200px]"
-        >
-          <option value="">All statuses</option>
-          <option value="pending">Pending payment</option>
-          <option value="paid">Paid</option>
-          <option value="processing">Processing</option>
-          <option value="shipped">Shipped</option>
-          <option value="delivered">Delivered</option>
-          <option value="completed">Completed</option>
-          <option value="cancelled">Cancelled</option>
-        </Select>
+          options={[
+            { value: "", label: "All statuses" },
+            { value: "pending", label: "Pending payment" },
+            { value: "paid", label: "Paid" },
+            { value: "processing", label: "Processing" },
+            { value: "shipped", label: "Shipped" },
+            { value: "delivered", label: "Delivered" },
+            { value: "completed", label: "Completed" },
+            { value: "cancelled", label: "Cancelled" },
+          ]}
+          className="w-[200px]"
+        />
       </div>
 
       <Card>

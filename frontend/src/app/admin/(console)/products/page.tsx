@@ -16,7 +16,7 @@ import { toast } from "@/components/admin/toast";
 import { formatIDR } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
+import { AdminSelect } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
 import { Table, THead, TBody, TR, TH, TD } from "@/components/ui/table";
 
@@ -98,44 +98,37 @@ export default function ProductsPage() {
         }
       />
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-        <Input
-          placeholder="Search products…"
-          value={search}
-          onChange={(e) => {
-            setPage(1);
-            setSearch(e.target.value);
-          }}
-          className="sm:max-w-xs"
-        />
-        <Select
+      <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+        <div className="relative sm:max-w-xs w-full">
+          <Input
+            placeholder="Search products…"
+            value={search}
+            onChange={(e) => {
+              setPage(1);
+              setSearch(e.target.value);
+            }}
+          />
+        </div>
+        <AdminSelect
           value={status}
-          onChange={(e) => {
-            setPage(1);
-            setStatus(e.target.value);
-          }}
-          className="sm:max-w-[160px]"
-        >
-          <option value="">All statuses</option>
-          <option value="draft">Draft</option>
-          <option value="published">Published</option>
-          <option value="archived">Archived</option>
-        </Select>
-        <Select
+          onChange={(val) => { setPage(1); setStatus(val); }}
+          options={[
+            { value: "", label: "All statuses" },
+            { value: "draft", label: "Draft" },
+            { value: "published", label: "Published" },
+            { value: "archived", label: "Archived" },
+          ]}
+          className="sm:w-[160px]"
+        />
+        <AdminSelect
           value={categoryId}
-          onChange={(e) => {
-            setPage(1);
-            setCategoryId(e.target.value);
-          }}
-          className="sm:max-w-[200px]"
-        >
-          <option value="">All categories</option>
-          {categories.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
-            </option>
-          ))}
-        </Select>
+          onChange={(val) => { setPage(1); setCategoryId(val); }}
+          options={[
+            { value: "", label: "All categories" },
+            ...categories.map((c) => ({ value: c.id, label: c.name })),
+          ]}
+          className="sm:w-[200px]"
+        />
       </div>
 
       <Card>

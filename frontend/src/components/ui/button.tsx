@@ -1,15 +1,13 @@
 import type { ButtonHTMLAttributes } from "react";
 import { cn } from "@/lib/utils/cn";
 
-// Storefront variants (primary/secondary/ghost) keep the rose theme.
-// Neutral variants (default/outline/destructive) are the shadcn-style admin set.
 type ButtonVariant =
-  | "primary"
-  | "secondary"
-  | "ghost"
-  | "default"
-  | "outline"
-  | "destructive";
+  | "primary"   // storefront: rose
+  | "secondary" // storefront: outlined rose
+  | "ghost"     // icon/transparent
+  | "default"   // admin: dark/black
+  | "outline"   // admin: outlined gray
+  | "destructive"; // danger red
 
 type ButtonSize = "default" | "sm" | "icon";
 
@@ -19,32 +17,29 @@ type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
-  default: "min-h-10 px-4 text-sm",
-  sm: "min-h-8 px-3 text-xs",
-  icon: "h-9 w-9",
+  default: "h-9 px-4 text-sm",
+  sm: "h-7 px-3 text-xs",
+  icon: "h-8 w-8 p-0",
 };
 
 export function Button({
   className,
-  variant = "primary",
+  variant = "default",
   size = "default",
   ...props
 }: ButtonProps) {
   return (
     <button
       className={cn(
-        "focus-ring inline-flex items-center justify-center gap-2 rounded-md font-semibold transition disabled:pointer-events-none disabled:opacity-50",
+        "inline-flex items-center justify-center gap-1.5 rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 focus-visible:ring-offset-1 disabled:pointer-events-none disabled:opacity-50",
         sizeClasses[size],
-        size === "default" && "min-h-11",
-        // storefront
-        variant === "primary" && "min-h-11 px-5 bg-[#C95F72] text-white hover:bg-[#A9445A]",
-        variant === "secondary" &&
-          "min-h-11 px-5 border border-[#C95F72] bg-white text-[#A9445A] hover:bg-[#FFF1F3]",
-        variant === "ghost" && "text-zinc-700 hover:bg-zinc-100",
-        // admin / neutral
-        variant === "default" && "bg-zinc-900 text-zinc-50 hover:bg-zinc-800",
-        variant === "outline" &&
-          "border border-zinc-200 bg-white text-zinc-900 hover:bg-zinc-50",
+        // storefront variants
+        variant === "primary" && "bg-[#C95F72] text-white hover:bg-[#A9445A]",
+        variant === "secondary" && "border border-[#C95F72] bg-white text-[#A9445A] hover:bg-[#FFF1F3]",
+        // admin variants (Shadcn style)
+        variant === "default" && "bg-gray-900 text-white hover:bg-gray-800",
+        variant === "outline" && "border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 hover:text-gray-900",
+        variant === "ghost" && "text-gray-600 hover:bg-gray-100 hover:text-gray-900",
         variant === "destructive" && "bg-red-600 text-white hover:bg-red-700",
         className,
       )}

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Cormorant_Garamond, Inter } from "next/font/google";
+import { GeistSans } from "geist/font/sans";
 import { PromoBar } from "@/components/layout/promo-bar";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
@@ -35,7 +36,7 @@ export default async function RootLayout({
   const { settings, categories } = await getChromeData();
 
   return (
-    <html lang="id" className={`${inter.variable} ${cormorant.variable}`}>
+    <html lang="id" className={`${inter.variable} ${cormorant.variable} ${GeistSans.variable}`}>
       <body suppressHydrationWarning>
         <WishlistHydrator />
         <CartHydrator />

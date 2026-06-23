@@ -10,7 +10,8 @@ import { Badge } from "@/components/ui/badge";
 import { ErrorState, EmptyState, TableSkeleton } from "@/components/admin/data-state";
 import { PaginationBar } from "@/components/admin/pagination-bar";
 import { formatDateTime } from "@/lib/format";
-import { Select } from "@/components/ui/select";
+import { AdminDatePicker } from "@/components/ui/date-picker";
+import { AdminSelect } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
 import { Table, THead, TBody, TR, TH, TD } from "@/components/ui/table";
 
@@ -50,58 +51,52 @@ export default function AuditLogsPage() {
     <div className="space-y-6">
       <PageHeader title="Audit Logs" description="Every administrative change, newest first." />
 
-      <div className="flex flex-col gap-3 sm:flex-row">
-        <Select
+      <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+        <AdminSelect
           value={action}
-          onChange={(e) => {
-            setPage(1);
-            setAction(e.target.value);
-          }}
-          className="sm:max-w-[180px]"
-        >
-          <option value="">All actions</option>
-          <option value="create">Create</option>
-          <option value="update">Update</option>
-          <option value="delete">Delete</option>
-          <option value="status_change">Status change</option>
-          <option value="login">Login</option>
-          <option value="logout">Logout</option>
-        </Select>
-        <Select
-          value={entity}
-          onChange={(e) => {
-            setPage(1);
-            setEntity(e.target.value);
-          }}
-          className="sm:max-w-[180px]"
-        >
-          <option value="">All entities</option>
-          <option value="product">Product</option>
-          <option value="category">Category</option>
-          <option value="order">Order</option>
-          <option value="customer">Customer</option>
-          <option value="admin_user">Admin user</option>
-          <option value="coupon">Coupon</option>
-          <option value="review">Review</option>
-          <option value="stock">Stock</option>
-          <option value="inquiry">Inquiry</option>
-          <option value="setting">Setting</option>
-          <option value="auth">Auth</option>
-          <option value="user">User</option>
-        </Select>
-        <input
-          type="date"
-          value={from}
-          onChange={(e) => { setPage(1); setFrom(e.target.value); }}
-          aria-label="From date"
-          className="h-9 rounded-md border border-zinc-200 bg-white px-2 text-sm text-zinc-700 outline-none focus:border-zinc-400 sm:max-w-[150px]"
+          onChange={(val) => { setPage(1); setAction(val); }}
+          options={[
+            { value: "", label: "All actions" },
+            { value: "create", label: "Create" },
+            { value: "update", label: "Update" },
+            { value: "delete", label: "Delete" },
+            { value: "status_change", label: "Status change" },
+            { value: "login", label: "Login" },
+            { value: "logout", label: "Logout" },
+          ]}
+          className="sm:w-[180px]"
         />
-        <input
-          type="date"
+        <AdminSelect
+          value={entity}
+          onChange={(val) => { setPage(1); setEntity(val); }}
+          options={[
+            { value: "", label: "All entities" },
+            { value: "product", label: "Product" },
+            { value: "category", label: "Category" },
+            { value: "order", label: "Order" },
+            { value: "customer", label: "Customer" },
+            { value: "admin_user", label: "Admin user" },
+            { value: "coupon", label: "Coupon" },
+            { value: "review", label: "Review" },
+            { value: "stock", label: "Stock" },
+            { value: "inquiry", label: "Inquiry" },
+            { value: "setting", label: "Setting" },
+            { value: "auth", label: "Auth" },
+            { value: "user", label: "User" },
+          ]}
+          className="sm:w-[180px]"
+        />
+        <AdminDatePicker
+          value={from}
+          onChange={(val) => { setPage(1); setFrom(val); }}
+          placeholder="Start date"
+          className="sm:w-[150px]"
+        />
+        <AdminDatePicker
           value={to}
-          onChange={(e) => { setPage(1); setTo(e.target.value); }}
-          aria-label="To date"
-          className="h-9 rounded-md border border-zinc-200 bg-white px-2 text-sm text-zinc-700 outline-none focus:border-zinc-400 sm:max-w-[150px]"
+          onChange={(val) => { setPage(1); setTo(val); }}
+          placeholder="End date"
+          className="sm:w-[150px]"
         />
       </div>
 

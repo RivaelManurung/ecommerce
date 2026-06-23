@@ -14,7 +14,7 @@ import { PaginationBar } from "@/components/admin/pagination-bar";
 import { toast } from "@/components/admin/toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
+import { AdminSelect } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
 import { Table, THead, TBody, TR, TH, TD } from "@/components/ui/table";
 
@@ -87,7 +87,7 @@ export default function CategoriesPage() {
         }
       />
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
         <Input
           placeholder="Search categories…"
           value={search}
@@ -97,18 +97,19 @@ export default function CategoriesPage() {
           }}
           className="sm:max-w-xs"
         />
-        <Select
+        <AdminSelect
           value={status}
-          onChange={(e) => {
+          onChange={(val) => {
             setPage(1);
-            setStatus(e.target.value);
+            setStatus(val);
           }}
-          className="sm:max-w-[160px]"
-        >
-          <option value="">All statuses</option>
-          <option value="active">Active</option>
-          <option value="inactive">Inactive</option>
-        </Select>
+          options={[
+            { value: "", label: "All statuses" },
+            { value: "active", label: "Active" },
+            { value: "inactive", label: "Inactive" },
+          ]}
+          className="sm:w-[160px]"
+        />
       </div>
 
       <Card>

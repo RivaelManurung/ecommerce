@@ -14,7 +14,7 @@ import { formatDateTime } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Select } from "@/components/ui/select";
+import { AdminSelect } from "@/components/ui/select";
 import { Table, THead, TBody, TR, TH, TD } from "@/components/ui/table";
 
 const LIMIT = 10;
@@ -93,12 +93,17 @@ export default function ReviewsPage() {
       <PageHeader title="Reviews" description="Moderate customer product reviews." />
 
       <div className="flex">
-        <Select value={status} onChange={(e) => { setPage(1); setStatus(e.target.value); }} className="sm:max-w-[180px]" aria-label="Filter by status">
-          <option value="">All statuses</option>
-          <option value="pending">Pending</option>
-          <option value="approved">Approved</option>
-          <option value="rejected">Rejected</option>
-        </Select>
+        <AdminSelect
+          value={status}
+          onChange={(val) => { setPage(1); setStatus(val); }}
+          options={[
+            { value: "", label: "All statuses" },
+            { value: "pending", label: "Pending" },
+            { value: "approved", label: "Approved" },
+            { value: "rejected", label: "Rejected" },
+          ]}
+          className="w-[180px]"
+        />
       </div>
 
       <Card>

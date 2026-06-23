@@ -17,8 +17,8 @@ export function PaginationBar({
   const from = (page - 1) * limit + 1;
   const to = Math.min(page * limit, total);
   return (
-    <div className="flex items-center justify-between border-t border-zinc-100 px-3 py-3 text-sm text-zinc-500">
-      <span>
+    <div className="flex items-center justify-between border-t border-gray-100 px-4 py-3 text-sm text-gray-500">
+      <span className="text-xs">
         {from}–{to} of {total}
       </span>
       <div className="flex items-center gap-1">
@@ -31,7 +31,7 @@ export function PaginationBar({
         >
           <ChevronLeft size={14} /> Prev
         </Button>
-        <span className="px-2 text-xs text-zinc-500">
+        <span className="px-2 text-xs text-gray-500">
           Page {page} / {Math.max(totalPages, 1)}
         </span>
         <Button

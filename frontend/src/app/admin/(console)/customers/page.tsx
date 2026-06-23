@@ -11,7 +11,7 @@ import { ErrorState, EmptyState, TableSkeleton } from "@/components/admin/data-s
 import { PaginationBar } from "@/components/admin/pagination-bar";
 import { CustomerStatusBadge } from "@/components/admin/customer-status-badge";
 import { formatDateTime } from "@/lib/format";
-import { Select } from "@/components/ui/select";
+import { AdminSelect } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Table, THead, TBody, TR, TH, TD } from "@/components/ui/table";
@@ -60,9 +60,9 @@ export default function CustomersPage() {
     <div className="space-y-6">
       <PageHeader title="Customers" description="Storefront accounts, purchase history, and access control." />
 
-      <div className="flex flex-wrap gap-3">
+      <div className="flex flex-wrap gap-2">
         <div className="relative flex-1 sm:max-w-xs">
-          <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
+          <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <Input
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
@@ -71,19 +71,19 @@ export default function CustomersPage() {
             aria-label="Search customers"
           />
         </div>
-        <Select
+        <AdminSelect
           value={status}
-          onChange={(e) => {
+          onChange={(val) => {
             setPage(1);
-            setStatus(e.target.value as "" | "active" | "blocked");
+            setStatus(val as "" | "active" | "blocked");
           }}
-          className="sm:max-w-[180px]"
-          aria-label="Filter by status"
-        >
-          <option value="">All statuses</option>
-          <option value="active">Active</option>
-          <option value="blocked">Blocked</option>
-        </Select>
+          options={[
+            { value: "", label: "All statuses" },
+            { value: "active", label: "Active" },
+            { value: "blocked", label: "Blocked" },
+          ]}
+          className="w-[160px]"
+        />
       </div>
 
       <Card>

@@ -97,7 +97,7 @@ export function ProductDetail({
 
       <section className="grid gap-10 lg:grid-cols-[1.05fr_.95fr]">
         {/* Gallery */}
-        <div className="grid gap-4 md:grid-cols-[92px_1fr]">
+        <div className={cn("grid gap-4", images.length > 1 ? "md:grid-cols-[92px_1fr]" : "w-full max-w-[480px]")}>
           {images.length > 1 ? (
             <div className="order-2 grid grid-cols-4 gap-3 md:order-1 md:grid-cols-1">
               {images.map((img) => (
@@ -114,7 +114,7 @@ export function ProductDetail({
               ))}
             </div>
           ) : null}
-          <div className="order-1 relative aspect-square overflow-hidden rounded-3xl border border-[#EEE7E2] bg-[#FAF4EF] shadow-[0_22px_70px_rgba(73,45,38,0.08)] md:order-2">
+          <div className="order-1 relative w-full aspect-square overflow-hidden rounded-3xl border border-[#EEE7E2] bg-[#FAF4EF] shadow-[0_22px_70px_rgba(73,45,38,0.08)] md:order-2">
             <AnimatePresence mode="wait">
               <motion.div key={active} className="absolute inset-0" initial={{ opacity: 0, scale: 1.015 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.28 }}>
                 <Image src={active} alt={product.name} fill priority sizes="(max-width: 1024px) 100vw, 50vw" className="object-cover" />

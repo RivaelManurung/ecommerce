@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select } from "@/components/ui/select";
+import { AdminSelect } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
 import { Spinner } from "@/components/ui/spinner";
 import { Table, THead, TBody, TR, TH, TD } from "@/components/ui/table";
@@ -153,10 +153,14 @@ function AdjustModal({ row, onClose, onSaved }: { row: InventoryRow; onClose: ()
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label htmlFor="mode">Mode</Label>
-              <Select id="mode" value={mode} onChange={(e) => setMode(e.target.value as "add" | "set")}>
-                <option value="add">Add / remove (±)</option>
-                <option value="set">Set absolute</option>
-              </Select>
+              <AdminSelect
+                value={mode}
+                onChange={(val) => setMode(val as "add" | "set")}
+                options={[
+                  { value: "add", label: "Add / remove (±)" },
+                  { value: "set", label: "Set absolute" },
+                ]}
+              />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="qty">Quantity</Label>

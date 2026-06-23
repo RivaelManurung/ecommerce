@@ -10,7 +10,7 @@ import { OrderStatusBadge } from "@/components/admin/order-badges";
 import { formatIDR } from "@/lib/format";
 import type { OrderStatus } from "@/features/orders/api";
 import { Card } from "@/components/ui/card";
-import { Select } from "@/components/ui/select";
+import { AdminSelect } from "@/components/ui/select";
 
 const RANGES = [
   { value: 7, label: "Last 7 days" },
@@ -48,9 +48,12 @@ export default function ReportsPage() {
         title="Reports"
         description="Sales and customer performance overview."
         actions={
-          <Select value={days} onChange={(e) => setDays(Number(e.target.value))} className="max-w-[160px]" aria-label="Date range">
-            {RANGES.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
-          </Select>
+          <AdminSelect
+            value={String(days)}
+            onChange={(val) => setDays(Number(val))}
+            options={RANGES.map((r) => ({ value: String(r.value), label: r.label }))}
+            className="w-[160px]"
+          />
         }
       />
 

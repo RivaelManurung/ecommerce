@@ -11,7 +11,7 @@ import { ErrorState, EmptyState, TableSkeleton } from "@/components/admin/data-s
 import { PaginationBar } from "@/components/admin/pagination-bar";
 import { toast } from "@/components/admin/toast";
 import { formatDateTime } from "@/lib/format";
-import { Select } from "@/components/ui/select";
+import { AdminSelect } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
 import { Table, THead, TBody, TR, TH, TD } from "@/components/ui/table";
 
@@ -66,19 +66,20 @@ export default function InquiriesPage() {
       <PageHeader title="Inquiries" description="Customer messages from the storefront." />
 
       <div className="flex">
-        <Select
+        <AdminSelect
           value={status}
-          onChange={(e) => {
+          onChange={(val) => {
             setPage(1);
-            setStatus(e.target.value);
+            setStatus(val);
           }}
-          className="sm:max-w-[180px]"
-        >
-          <option value="">All statuses</option>
-          <option value="new">New</option>
-          <option value="contacted">Contacted</option>
-          <option value="closed">Closed</option>
-        </Select>
+          options={[
+            { value: "", label: "All statuses" },
+            { value: "new", label: "New" },
+            { value: "contacted", label: "Contacted" },
+            { value: "closed", label: "Closed" },
+          ]}
+          className="w-[180px]"
+        />
       </div>
 
       <Card>
@@ -127,18 +128,15 @@ export default function InquiriesPage() {
                     </TD>
                     <TD className="text-zinc-500">{formatDateTime(i.createdAt)}</TD>
                     <TD className="text-right">
-                      <Select
+                      <AdminSelect
                         value={i.status}
                         disabled={updating === i.id || i.status === "closed"}
-                        onChange={(e) => changeStatus(i, e.target.value as InquiryStatus)}
-                        className="ml-auto max-w-[150px]"
-                      >
-                        {STATUSES.map((s) => (
-                          <option key={s} value={s} disabled={rank[s] < rank[i.status]}>
-                            {s.charAt(0).toUpperCase() + s.slice(1)}
-                          </option>
-                        ))}
-                      </Select>
+                        onChange={(val) => changeStatus(i, val as InquiryStatus)}
+                        options={STATUSES
+                          .filter((s) => rank[s] >= rank[i.status])
+                          .map((s) => ({ value: s, label: s.charAt(0).toUpperCase() + s.slice(1) }))}
+                        className="ml-auto w-[130px]"
+                      />
                     </TD>
                   </TR>
                 ))}
