@@ -4,7 +4,10 @@ import { getPublicProduct, getPublicProducts, getPublicSettings } from "@/featur
 import { ApiError } from "@/lib/api-client";
 import type { Product, Setting } from "@/lib/admin-types";
 import { FALLBACK_SETTINGS } from "@/lib/site-config";
+import { primaryImage } from "@/lib/catalog";
 import { ProductDetail } from "@/components/catalog/product-detail";
+
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://ekatalog.vandev.my.id";
 
 async function load(slug: string): Promise<Product | null> {
   try {
@@ -22,9 +25,47 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const product = await load(slug).catch(() => null);
+  const title = product ? `${product.name} | Veloura Beauty` : "Produk | Veloura Beauty";
   return {
-    title: product ? `${product.name} | Veloura Beauty` : "Produk | Veloura Beauty",
+    title,
     description: product?.description,
+    openGraph: product
+      ? {
+          title,
+          description: product.description,
+          type: "website",
+          url: `${SITE_URL}/catalog/${product.slug}`,
+          images: [{ url: primaryImage(product).url, alt: product.name }],
+        }
+      : undefined,
+  };
+}
+
+// Derive a Product JSON-LD payload from the catalog product for rich results.
+function productJsonLd(product: Product) {
+  const prices = product.variants.length
+    ? product.variants.map((v) => v.price || product.basePrice)
+    : [product.basePrice];
+  const lowPrice = Math.min(...prices);
+  const inStock = product.variants.length
+    ? product.variants.some((v) => v.stock > 0)
+    : true;
+  return {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: product.name,
+    description: product.description || undefined,
+    image: product.images.length ? product.images.map((i) => i.url) : [primaryImage(product).url],
+    ...(product.category ? { category: product.category.name } : {}),
+    offers: {
+      "@type": "Offer",
+      priceCurrency: product.currency || "IDR",
+      price: lowPrice,
+      availability: inStock
+        ? "https://schema.org/InStock"
+        : "https://schema.org/OutOfStock",
+      url: `${SITE_URL}/catalog/${product.slug}`,
+    },
   };
 }
 
@@ -52,5 +93,13 @@ export default async function ProductDetailPage({
 
   const relatedProducts = related.filter((p) => p.id !== product.id).slice(0, 4);
 
-  return <ProductDetail product={product} related={relatedProducts} settings={settings} />;
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd(product)) }}
+      />
+      <ProductDetail product={product} related={relatedProducts} settings={settings} />
+    </>
+  );
 }

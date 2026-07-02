@@ -89,9 +89,11 @@ export function LoginForm() {
           </Button>
         </form>
 
-        <p className="mt-5 text-center text-xs text-zinc-400">
-          Seed admin: admin@ekatalog.test / admin12345
-        </p>
+        {process.env.NODE_ENV !== "production" && (
+          <p className="mt-5 text-center text-xs text-zinc-400">
+            Seed admin: admin@ekatalog.test / admin12345
+          </p>
+        )}
       </div>
     </div>
   );

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 import { useState } from "react";
 import type { Product, Setting } from "@/lib/admin-types";
+import { ApiError } from "@/lib/api-client";
 import { formatIDR } from "@/lib/format";
 import { primaryImage, toWishlistItem } from "@/lib/catalog";
 import { useWishlistStore } from "@/lib/store/wishlist-store";
@@ -46,6 +47,7 @@ export function ProductDetail({
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
   const [adding, setAdding] = useState(false);
+  const [cartError, setCartError] = useState<string | null>(null);
 
   const selected = product.variants.find((v) => v.id === variantId);
   const selectedStock = selected?.stock ?? 0;
@@ -56,6 +58,7 @@ export function ProductDetail({
   const onAddToCart = async () => {
     if (!selected || selectedStock <= 0) return;
     setAdding(true);
+    setCartError(null);
     try {
       await addToCart({
         productId: product.id,
@@ -70,6 +73,8 @@ export function ProductDetail({
       });
       setAdded(true);
       setTimeout(() => setAdded(false), 2000);
+    } catch (err) {
+      setCartError(err instanceof ApiError ? err.message : "Gagal menambahkan ke keranjang");
     } finally {
       setAdding(false);
     }
@@ -224,6 +229,12 @@ export function ProductDetail({
                   </>
                 )}
               </button>
+
+              {cartError ? (
+                <p role="alert" className="rounded-lg border border-[#F0C7CF] bg-[#FBEEF1] px-3 py-2 text-sm text-[#C0445E]">
+                  {cartError}
+                </p>
+              ) : null}
             </div>
           ) : null}
 

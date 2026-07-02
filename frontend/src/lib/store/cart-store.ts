@@ -4,7 +4,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { CartLine } from "@/features/cart/api";
 import * as cartApi from "@/features/cart/api";
-import { TOKEN_COOKIE } from "@/lib/api-client";
+import { ApiError, TOKEN_COOKIE } from "@/lib/api-client";
 
 // A guest line carries the same display fields as a server line; lineTotal and
 // availability are derived locally so the guest cart renders identically.
@@ -28,9 +28,15 @@ function toInput(items: CartLine[]): cartApi.CartItemInput[] {
   return items.map((i) => ({ productId: i.productId, variantId: i.variantId, quantity: i.quantity }));
 }
 
+function cartErrorMessage(err: unknown): string {
+  return err instanceof ApiError ? err.message : "Gagal memperbarui keranjang. Coba lagi.";
+}
+
 interface CartState {
   items: CartLine[];
   loading: boolean;
+  /** Last error from a server cart action; surfaced by CartView, cleared on retry. */
+  error: string | null;
   count: () => number;
   subtotal: () => number;
   /** Pull the authoritative server cart when signed in; no-op for guests. */
@@ -39,6 +45,8 @@ interface CartState {
   setQty: (variantId: string, quantity: number) => Promise<void>;
   remove: (variantId: string) => Promise<void>;
   clear: () => Promise<void>;
+  /** Dismiss the current cart error. */
+  clearError: () => void;
   /** Merge the local guest cart into the server cart after sign-in. */
   syncOnLogin: () => Promise<void>;
   /** Drop local state (used on sign-out). */
@@ -50,6 +58,7 @@ export const useCartStore = create<CartState>()(
     (set, get) => ({
       items: [],
       loading: false,
+      error: null,
 
       count: () => get().items.reduce((n, i) => n + i.quantity, 0),
       subtotal: () => get().items.reduce((s, i) => s + (i.available ? i.lineTotal : 0), 0),
@@ -89,8 +98,12 @@ export const useCartStore = create<CartState>()(
 
       setQty: async (variantId, quantity) => {
         if (loggedIn()) {
-          const view = await cartApi.updateItem(variantId, quantity);
-          set({ items: view.items });
+          try {
+            const view = await cartApi.updateItem(variantId, quantity);
+            set({ items: view.items, error: null });
+          } catch (err) {
+            set({ error: cartErrorMessage(err) });
+          }
           return;
         }
         let items = get().items;
@@ -103,24 +116,35 @@ export const useCartStore = create<CartState>()(
               : i,
           );
         }
-        set({ items: withDerived(items) });
+        set({ items: withDerived(items), error: null });
       },
 
       remove: async (variantId) => {
         if (loggedIn()) {
-          const view = await cartApi.removeItem(variantId);
-          set({ items: view.items });
+          try {
+            const view = await cartApi.removeItem(variantId);
+            set({ items: view.items, error: null });
+          } catch (err) {
+            set({ error: cartErrorMessage(err) });
+          }
           return;
         }
-        set({ items: get().items.filter((i) => i.variantId !== variantId) });
+        set({ items: get().items.filter((i) => i.variantId !== variantId), error: null });
       },
 
       clear: async () => {
         if (loggedIn()) {
-          await cartApi.clearCart();
+          try {
+            await cartApi.clearCart();
+          } catch (err) {
+            set({ error: cartErrorMessage(err) });
+            return;
+          }
         }
-        set({ items: [] });
+        set({ items: [], error: null });
       },
+
+      clearError: () => set({ error: null }),
 
       syncOnLogin: async () => {
         const guest = get().items;

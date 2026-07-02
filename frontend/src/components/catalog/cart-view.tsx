@@ -19,6 +19,8 @@ export function CartView({ whatsapp }: { whatsapp: string }) {
   const remove = useCartStore((s) => s.remove);
   const clear = useCartStore((s) => s.clear);
   const refresh = useCartStore((s) => s.refresh);
+  const error = useCartStore((s) => s.error);
+  const clearError = useCartStore((s) => s.clearError);
 
   const [authed, setAuthed] = useState(false);
 
@@ -76,6 +78,19 @@ export function CartView({ whatsapp }: { whatsapp: string }) {
           Kosongkan
         </button>
       </div>
+
+      {error ? (
+        <div className="mb-6 flex items-start justify-between gap-3 rounded-2xl border border-[#F0C7CF] bg-[#FBEEF1] px-4 py-3 text-sm text-[#C0445E]">
+          <span role="alert">{error}</span>
+          <button
+            type="button"
+            onClick={() => clearError()}
+            className="focus-ring shrink-0 font-semibold underline hover:text-[#A9445A]"
+          >
+            Tutup
+          </button>
+        </div>
+      ) : null}
 
       {!authed ? (
         <div className="mb-6 rounded-2xl border border-[#E7D9CF] bg-[#FFF8F5] px-4 py-3 text-sm text-[#7a6a60]">

@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronRight, Loader2, PackageX } from "lucide-react";
+import { AlertCircle, ChevronRight, Loader2, PackageX } from "lucide-react";
 import { getMyOrders, type Order } from "@/features/orders/api";
-import { TOKEN_COOKIE } from "@/lib/api-client";
+import { ApiError, TOKEN_COOKIE } from "@/lib/api-client";
 import { orderStatusMeta } from "@/lib/order-status";
 import { formatIDR } from "@/lib/format";
 
@@ -14,6 +14,16 @@ export function OrdersView() {
   const router = useRouter();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const load = useCallback(() => {
+    setLoading(true);
+    setError(null);
+    getMyOrders()
+      .then(setOrders)
+      .catch((e) => setError(e instanceof ApiError ? e.message : "Gagal memuat pesanan"))
+      .finally(() => setLoading(false));
+  }, []);
 
   useEffect(() => {
     const authed = new RegExp(`(?:^|; )${TOKEN_COOKIE}=`).test(document.cookie);
@@ -21,20 +31,37 @@ export function OrdersView() {
       router.replace("/login?next=/orders");
       return;
     }
-    let active = true;
-    getMyOrders()
-      .then((list) => active && setOrders(list))
-      .catch(() => active && setOrders([]))
-      .finally(() => active && setLoading(false));
-    return () => {
-      active = false;
-    };
-  }, [router]);
+    // Defer to a macrotask so the synchronous state resets in load() don't run
+    // inside the effect body (matches the admin ProductDetail pattern).
+    const t = setTimeout(load, 0);
+    return () => clearTimeout(t);
+  }, [router, load]);
 
   if (loading) {
     return (
       <main className="container-page grid min-h-[40vh] place-items-center py-16">
         <Loader2 className="animate-spin text-[#C95F72]" />
+      </main>
+    );
+  }
+
+  if (error) {
+    return (
+      <main className="container-page py-16">
+        <div className="mx-auto grid max-w-md place-items-center gap-5 text-center">
+          <span className="grid h-20 w-20 place-items-center rounded-full bg-[#FBEEF1] text-[#C0445E]">
+            <AlertCircle size={32} />
+          </span>
+          <h1 className="font-serif-display text-3xl">Gagal memuat pesanan</h1>
+          <p className="text-sm leading-6 text-[#737373]">{error} — silakan coba lagi.</p>
+          <button
+            type="button"
+            onClick={() => load()}
+            className="focus-ring inline-flex min-h-11 items-center gap-2 rounded-md bg-[#C95F72] px-6 text-sm font-semibold text-white transition hover:bg-[#A9445A]"
+          >
+            Coba Lagi
+          </button>
+        </div>
       </main>
     );
   }

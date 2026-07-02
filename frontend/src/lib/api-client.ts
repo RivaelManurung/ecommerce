@@ -8,11 +8,27 @@ import type { PaginationMeta } from "./admin-types";
 // - On the server (RSC / route handlers) prefer INTERNAL_API_BASE_URL so calls
 //   go over Railway's fast private network (avoids public-URL hairpin hangs).
 // - In the browser always use the public NEXT_PUBLIC_API_BASE_URL.
+const LOCAL_API_FALLBACK = "http://localhost:8080/api/v1";
+
+// Warn once (dev) / throw (prod) when the public base URL is missing so a
+// misconfigured deployment fails loudly instead of silently hitting localhost.
+function resolvePublicApiBaseUrl(): string {
+  const configured = process.env.NEXT_PUBLIC_API_BASE_URL;
+  if (configured) return configured;
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("NEXT_PUBLIC_API_BASE_URL is not configured");
+  }
+  console.warn(
+    `[api-client] NEXT_PUBLIC_API_BASE_URL is not set — falling back to ${LOCAL_API_FALLBACK}`,
+  );
+  return LOCAL_API_FALLBACK;
+}
+
 export function apiBaseUrl(): string {
   if (typeof window === "undefined" && process.env.INTERNAL_API_BASE_URL) {
     return process.env.INTERNAL_API_BASE_URL;
   }
-  return process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080/api/v1";
+  return resolvePublicApiBaseUrl();
 }
 
 // Kept for backwards compatibility with any direct importers.

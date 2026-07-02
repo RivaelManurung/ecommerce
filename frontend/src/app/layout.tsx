@@ -24,6 +24,7 @@ const cormorant = Cormorant_Garamond({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://ekatalog.vandev.my.id"),
   title: "Veloura Beauty | Premium Indonesian Beauty Essentials",
   description: "Premium cosmetics and skincare for everyday beauty.",
 };
