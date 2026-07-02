@@ -4,12 +4,15 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ArrowRight, Loader2, Lock, Minus, MessageCircle, Plus, ShoppingBag, Trash2 } from "lucide-react";
 import { useCartStore } from "@/lib/store/cart-store";
 import { TOKEN_COOKIE } from "@/lib/api-client";
 import { formatIDR } from "@/lib/format";
 import { waLink } from "@/lib/wa";
 import { cn } from "@/lib/utils/cn";
+import { listItem, premiumEase } from "@/lib/animations";
+import { Reveal } from "@/components/shared/reveal";
 
 export function CartView({ whatsapp }: { whatsapp: string }) {
   const router = useRouter();
@@ -23,6 +26,7 @@ export function CartView({ whatsapp }: { whatsapp: string }) {
   const clearError = useCartStore((s) => s.clearError);
 
   const [authed, setAuthed] = useState(false);
+  const reduce = useReducedMotion();
 
   // Read auth + pull the server cart after mount (avoids a hydration mismatch).
   useEffect(() => {
@@ -36,7 +40,7 @@ export function CartView({ whatsapp }: { whatsapp: string }) {
   if (items.length === 0) {
     return (
       <main className="container-page py-16">
-        <div className="mx-auto grid max-w-md place-items-center gap-5 text-center">
+        <Reveal className="mx-auto grid max-w-md place-items-center gap-5 text-center">
           <span className="grid h-20 w-20 place-items-center rounded-full bg-[#FAF4EF] text-[#C95F72]">
             <ShoppingBag size={34} />
           </span>
@@ -50,7 +54,7 @@ export function CartView({ whatsapp }: { whatsapp: string }) {
           >
             Mulai Belanja <ArrowRight size={17} />
           </Link>
-        </div>
+        </Reveal>
       </main>
     );
   }
@@ -79,18 +83,27 @@ export function CartView({ whatsapp }: { whatsapp: string }) {
         </button>
       </div>
 
-      {error ? (
-        <div className="mb-6 flex items-start justify-between gap-3 rounded-2xl border border-[#F0C7CF] bg-[#FBEEF1] px-4 py-3 text-sm text-[#C0445E]">
-          <span role="alert">{error}</span>
-          <button
-            type="button"
-            onClick={() => clearError()}
-            className="focus-ring shrink-0 font-semibold underline hover:text-[#A9445A]"
+      <AnimatePresence>
+        {error ? (
+          <motion.div
+            key="cart-error"
+            initial={reduce ? false : { opacity: 0, y: -8 }}
+            animate={reduce ? {} : { opacity: 1, y: 0 }}
+            exit={reduce ? {} : { opacity: 0, y: -8 }}
+            transition={{ duration: 0.35, ease: premiumEase }}
+            className="mb-6 flex items-start justify-between gap-3 rounded-2xl border border-[#F0C7CF] bg-[#FBEEF1] px-4 py-3 text-sm text-[#C0445E]"
           >
-            Tutup
-          </button>
-        </div>
-      ) : null}
+            <span role="alert">{error}</span>
+            <button
+              type="button"
+              onClick={() => clearError()}
+              className="focus-ring shrink-0 font-semibold underline hover:text-[#A9445A]"
+            >
+              Tutup
+            </button>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
 
       {!authed ? (
         <div className="mb-6 rounded-2xl border border-[#E7D9CF] bg-[#FFF8F5] px-4 py-3 text-sm text-[#7a6a60]">
@@ -104,11 +117,17 @@ export function CartView({ whatsapp }: { whatsapp: string }) {
       <div className="grid gap-8 lg:grid-cols-[1fr_360px]">
         {/* Line items */}
         <ul className="grid gap-3">
+          <AnimatePresence initial={false}>
           {items.map((line) => (
-            <li
+            <motion.li
               key={line.variantId}
+              layout={reduce ? false : true}
+              variants={reduce ? undefined : listItem}
+              initial={reduce ? false : "hidden"}
+              animate={reduce ? undefined : "show"}
+              exit={reduce ? undefined : "exit"}
               className={cn(
-                "flex gap-4 rounded-2xl border border-[#EEE7E2] bg-white p-3 sm:p-4",
+                "flex gap-4 overflow-hidden rounded-2xl border border-[#EEE7E2] bg-white p-3 sm:p-4",
                 !line.available && "opacity-70",
               )}
             >
@@ -152,7 +171,23 @@ export function CartView({ whatsapp }: { whatsapp: string }) {
                     >
                       <Minus size={15} />
                     </button>
-                    <span className="grid h-9 w-10 place-items-center text-sm font-semibold tabular-nums">{line.quantity}</span>
+                    <span className="grid h-9 w-10 place-items-center overflow-hidden text-sm font-semibold tabular-nums">
+                      {reduce ? (
+                        line.quantity
+                      ) : (
+                        <AnimatePresence mode="wait" initial={false}>
+                          <motion.span
+                            key={line.quantity}
+                            initial={{ opacity: 0, y: 5 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -5 }}
+                            transition={{ duration: 0.2, ease: premiumEase }}
+                          >
+                            {line.quantity}
+                          </motion.span>
+                        </AnimatePresence>
+                      )}
+                    </span>
                     <button
                       type="button"
                       aria-label="Tambah"
@@ -169,8 +204,9 @@ export function CartView({ whatsapp }: { whatsapp: string }) {
                   </div>
                 </div>
               </div>
-            </li>
+            </motion.li>
           ))}
+          </AnimatePresence>
         </ul>
 
         {/* Summary */}

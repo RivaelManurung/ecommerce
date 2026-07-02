@@ -2,6 +2,7 @@ import { getPublicProducts } from "@/features/public/api";
 import { CatalogCard } from "@/components/catalog/catalog-card";
 import { SectionHeading } from "@/components/shared/section-heading";
 import { Reveal } from "@/components/shared/reveal";
+import { Stagger, StaggerItem } from "@/components/shared/stagger";
 
 export async function BestSellerSection() {
   let products = [] as Awaited<ReturnType<typeof getPublicProducts>>["data"];
@@ -14,19 +15,21 @@ export async function BestSellerSection() {
 
   return (
     <section className="container-page py-10">
-      <SectionHeading
-        eyebrow="Pilihan minggu ini"
-        title="Produk Terbaru"
-        copy="Koleksi terbaru yang baru saja masuk ke katalog kami."
-        href="/catalog"
-      />
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+      <Reveal>
+        <SectionHeading
+          eyebrow="Pilihan minggu ini"
+          title="Produk Terbaru"
+          copy="Koleksi terbaru yang baru saja masuk ke katalog kami."
+          href="/catalog"
+        />
+      </Reveal>
+      <Stagger className="grid grid-cols-2 gap-4 md:grid-cols-4">
         {products.slice(0, 8).map((product) => (
-          <Reveal key={product.id}>
+          <StaggerItem key={product.id}>
             <CatalogCard product={product} />
-          </Reveal>
+          </StaggerItem>
         ))}
-      </div>
+      </Stagger>
     </section>
   );
 }

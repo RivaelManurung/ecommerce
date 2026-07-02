@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Search } from "lucide-react";
+import { motion, useReducedMotion } from "framer-motion";
+import { fadeUp } from "@/lib/animations";
 
 export interface CatalogQuery {
   search?: string;
@@ -26,6 +28,7 @@ export function CatalogToolbar({
 }) {
   const router = useRouter();
   const [search, setSearch] = useState(current.search ?? "");
+  const reduceMotion = useReducedMotion();
 
   function apply(next: CatalogQuery) {
     const params = new URLSearchParams();
@@ -45,7 +48,12 @@ export function CatalogToolbar({
   }, [search]);
 
   return (
-    <div className="mb-5 flex flex-col gap-3 rounded-2xl border border-[#EEE7E2] bg-white/82 p-3 sm:flex-row sm:items-center sm:justify-between">
+    <motion.div
+      variants={reduceMotion ? undefined : fadeUp}
+      initial={reduceMotion ? false : "hidden"}
+      animate={reduceMotion ? false : "show"}
+      className="mb-5 flex flex-col gap-3 rounded-2xl border border-[#EEE7E2] bg-white/82 p-3 sm:flex-row sm:items-center sm:justify-between"
+    >
       <div className="relative w-full sm:max-w-xs">
         <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#B8AFA9]" />
         <input
@@ -68,6 +76,6 @@ export function CatalogToolbar({
           ))}
         </select>
       </div>
-    </div>
+    </motion.div>
   );
 }

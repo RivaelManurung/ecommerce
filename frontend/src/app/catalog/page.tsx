@@ -6,6 +6,7 @@ import type { Category, Paginated, Product } from "@/lib/admin-types";
 import { CatalogCard } from "@/components/catalog/catalog-card";
 import { CatalogToolbar } from "@/components/catalog/catalog-toolbar";
 import { CategorySidebar } from "@/components/catalog/category-sidebar";
+import { Stagger, StaggerItem } from "@/components/shared/stagger";
 
 export const metadata: Metadata = {
   title: "Katalog Produk | Veloura Beauty",
@@ -109,11 +110,13 @@ export default async function CatalogPage({
             />
           ) : (
             <>
-              <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
+              <Stagger className="grid grid-cols-2 gap-4 md:grid-cols-3">
                 {products.map((p) => (
-                  <CatalogCard key={p.id} product={p} />
+                  <StaggerItem key={p.id}>
+                    <CatalogCard product={p} />
+                  </StaggerItem>
                 ))}
-              </div>
+              </Stagger>
 
               {meta && meta.totalPages > 1 && (
                 <div className="mt-10 flex items-center justify-center gap-2 text-sm">

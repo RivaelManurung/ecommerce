@@ -3,7 +3,7 @@
 import { Check, ChevronRight, Heart, Mail, MessageCircle, Minus, Plus, ShieldCheck, ShoppingBag, Truck, X, ZoomIn } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useState } from "react";
 import type { Product, Setting } from "@/lib/admin-types";
 import { ApiError } from "@/lib/api-client";
@@ -13,6 +13,8 @@ import { useWishlistStore } from "@/lib/store/wishlist-store";
 import { useCartStore } from "@/lib/store/cart-store";
 import { waLink } from "@/lib/wa";
 import { cn } from "@/lib/utils/cn";
+import { tapScale } from "@/lib/animations";
+import { Stagger, StaggerItem } from "@/components/shared/stagger";
 import { CatalogCard } from "./catalog-card";
 
 type Tab = "deskripsi" | "varian" | "inquiry";
@@ -30,6 +32,7 @@ export function ProductDetail({
   const [active, setActive] = useState(images[0].url);
   const [zoom, setZoom] = useState(false);
   const [tab, setTab] = useState<Tab>("deskripsi");
+  const reduceMotion = useReducedMotion();
 
   const toggle = useWishlistStore((s) => s.toggle);
   const wished = useWishlistStore((s) => s.exists(product.id));
@@ -106,16 +109,17 @@ export function ProductDetail({
           {images.length > 1 ? (
             <div className="order-2 grid grid-cols-4 gap-3 md:order-1 md:grid-cols-1">
               {images.map((img) => (
-                <button
+                <motion.button
                   key={img.id}
                   onClick={() => setActive(img.url)}
+                  whileTap={reduceMotion ? undefined : tapScale}
                   className={cn(
-                    "focus-ring relative aspect-square overflow-hidden rounded-xl border bg-white transition",
+                    "focus-ring relative aspect-square overflow-hidden rounded-xl border bg-white transition-[border-color,box-shadow] duration-300",
                     active === img.url ? "border-[#C95F72] ring-2 ring-[#C95F72]/25" : "border-[#EEE7E2] hover:border-[#E8BBC4]",
                   )}
                 >
                   <Image src={img.url} alt={img.alt} fill sizes="92px" className="object-cover" />
-                </button>
+                </motion.button>
               ))}
             </div>
           ) : null}
@@ -133,20 +137,30 @@ export function ProductDetail({
 
         {/* Info */}
         <div className="h-fit">
-          {product.category ? (
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#A58C82]">{product.category.name}</p>
-          ) : null}
-          <h1 className="mt-2 font-serif-display text-4xl leading-[1.02] md:text-5xl">{product.name}</h1>
+          <Stagger>
+            {product.category ? (
+              <StaggerItem>
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#A58C82]">{product.category.name}</p>
+              </StaggerItem>
+            ) : null}
+            <StaggerItem>
+              <h1 className="mt-2 font-serif-display text-4xl leading-[1.02] md:text-5xl">{product.name}</h1>
+            </StaggerItem>
 
-          <div className="mt-5 flex items-end gap-3">
-            <p className="text-3xl font-bold text-[#C95F72]">
-              {minPrice === maxPrice ? formatIDR(product.basePrice) : `${formatIDR(minPrice)} – ${formatIDR(maxPrice)}`}
-            </p>
-          </div>
+            <StaggerItem>
+              <div className="mt-5 flex items-end gap-3">
+                <p className="text-3xl font-bold text-[#C95F72]">
+                  {minPrice === maxPrice ? formatIDR(product.basePrice) : `${formatIDR(minPrice)} – ${formatIDR(maxPrice)}`}
+                </p>
+              </div>
+            </StaggerItem>
 
-          {product.description ? (
-            <p className="mt-5 leading-7 text-[#737373]">{product.description}</p>
-          ) : null}
+            {product.description ? (
+              <StaggerItem>
+                <p className="mt-5 leading-7 text-[#737373]">{product.description}</p>
+              </StaggerItem>
+            ) : null}
+          </Stagger>
 
           {/* Variant + quantity + add to cart */}
           {hasVariants ? (
@@ -210,25 +224,44 @@ export function ProductDetail({
                 </span>
               </div>
 
-              <button
+              <motion.button
                 type="button"
                 onClick={onAddToCart}
                 disabled={!canAddToCart || adding}
+                whileTap={reduceMotion || !canAddToCart ? undefined : tapScale}
+                animate={reduceMotion || !added ? { scale: 1 } : { scale: [1, 1.035, 1] }}
+                transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
                 className={cn(
-                  "focus-ring inline-flex min-h-12 items-center justify-center gap-2 rounded-md px-6 text-sm font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-50",
+                  "focus-ring inline-flex min-h-12 items-center justify-center gap-2 rounded-md px-6 text-sm font-semibold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50",
                   added ? "bg-[#0E7A53]" : "bg-[#C95F72] hover:bg-[#A9445A]",
                 )}
               >
-                {added ? (
-                  <>
-                    <Check size={18} /> Ditambahkan ke keranjang
-                  </>
-                ) : (
-                  <>
-                    <ShoppingBag size={18} /> {canAddToCart ? "Tambah ke Keranjang" : "Stok Habis"}
-                  </>
-                )}
-              </button>
+                <AnimatePresence mode="wait" initial={false}>
+                  {added ? (
+                    <motion.span
+                      key="added"
+                      className="inline-flex items-center gap-2"
+                      initial={reduceMotion ? false : { opacity: 0, y: 6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={reduceMotion ? undefined : { opacity: 0, y: -6 }}
+                      transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+                    >
+                      <Check size={18} /> Ditambahkan ke keranjang
+                    </motion.span>
+                  ) : (
+                    <motion.span
+                      key="idle"
+                      className="inline-flex items-center gap-2"
+                      initial={reduceMotion ? false : { opacity: 0, y: 6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={reduceMotion ? undefined : { opacity: 0, y: -6 }}
+                      transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+                    >
+                      <ShoppingBag size={18} /> {canAddToCart ? "Tambah ke Keranjang" : "Stok Habis"}
+                    </motion.span>
+                  )}
+                </AnimatePresence>
+              </motion.button>
 
               {cartError ? (
                 <p role="alert" className="rounded-lg border border-[#F0C7CF] bg-[#FBEEF1] px-3 py-2 text-sm text-[#C0445E]">
@@ -255,17 +288,26 @@ export function ProductDetail({
               >
                 <Mail size={17} /> Kirim Pertanyaan
               </Link>
-              <button
+              <motion.button
                 type="button"
                 onClick={() => toggle(toWishlistItem(product))}
+                whileTap={reduceMotion ? undefined : tapScale}
                 className={cn(
-                  "focus-ring inline-flex min-h-12 items-center justify-center gap-2 rounded-md border px-5 text-sm font-semibold transition",
+                  "focus-ring inline-flex min-h-12 items-center justify-center gap-2 rounded-md border px-5 text-sm font-semibold transition-colors",
                   wished ? "border-[#C95F72] bg-[#FFF1F3] text-[#A9445A]" : "border-[#EEE7E2] bg-white text-[#5f5853] hover:border-[#E8BBC4]",
                 )}
               >
-                <Heart size={17} className={wished ? "fill-[#C95F72] text-[#C95F72]" : ""} />
+                <motion.span
+                  key={wished ? "on" : "off"}
+                  initial={reduceMotion ? false : { scale: 0.6 }}
+                  animate={{ scale: 1 }}
+                  transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+                  className="inline-flex"
+                >
+                  <Heart size={17} className={wished ? "fill-[#C95F72] text-[#C95F72]" : ""} />
+                </motion.span>
                 {wished ? "Tersimpan" : "Wishlist"}
-              </button>
+              </motion.button>
             </div>
           </div>
 

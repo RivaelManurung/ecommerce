@@ -1,12 +1,10 @@
-"use client";
-
 import { ArrowRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { motion } from "framer-motion";
 import type { Category } from "@/lib/admin-types";
-import { fadeUp, staggerContainer } from "@/lib/animations";
 import { SectionHeading } from "@/components/shared/section-heading";
+import { Reveal } from "@/components/shared/reveal";
+import { Stagger, StaggerItem } from "@/components/shared/stagger";
 
 // Map known category slugs to the existing editorial photography + colour wash.
 const STYLES: Record<string, { image: string; surface: string; accent: string }> = {
@@ -25,22 +23,19 @@ export function HeroCategoryGrid({ categories }: { categories: Category[] }) {
 
   return (
     <section className="container-page py-9 md:py-11">
-      <SectionHeading
-        eyebrow="Belanja per kategori"
-        title="Telusuri Kategori"
-        copy="Temukan produk sesuai kebutuhanmu — dari skincare hingga tools."
-        href="/catalog"
-      />
-      <motion.div
-        className="hide-scrollbar grid auto-cols-[76vw] grid-flow-col gap-4 overflow-x-auto scroll-smooth pb-2 sm:auto-cols-[42vw] lg:grid-flow-row lg:grid-cols-6 lg:overflow-visible"
-        variants={staggerContainer}
-        initial="hidden"
-        animate="show"
-      >
+      <Reveal>
+        <SectionHeading
+          eyebrow="Belanja per kategori"
+          title="Telusuri Kategori"
+          copy="Temukan produk sesuai kebutuhanmu — dari skincare hingga tools."
+          href="/catalog"
+        />
+      </Reveal>
+      <Stagger className="hide-scrollbar grid auto-cols-[76vw] grid-flow-col gap-4 overflow-x-auto scroll-smooth pb-2 sm:auto-cols-[42vw] lg:grid-flow-row lg:grid-cols-6 lg:overflow-visible">
         {cards.map((category, index) => {
           const style = STYLES[category.slug] ?? FALLBACK;
           return (
-            <motion.div key={category.id} variants={fadeUp}>
+            <StaggerItem key={category.id}>
               <Link
                 href={`/catalog?category=${category.slug}`}
                 className={`group relative block min-h-[360px] snap-start overflow-hidden rounded-2xl bg-gradient-to-br ${style.surface} p-5 soft-shadow`}
@@ -64,10 +59,10 @@ export function HeroCategoryGrid({ categories }: { categories: Category[] }) {
                   </span>
                 </div>
               </Link>
-            </motion.div>
+            </StaggerItem>
           );
         })}
-      </motion.div>
+      </Stagger>
     </section>
   );
 }

@@ -1,6 +1,7 @@
 import { Mail, MapPin, MessageCircle, Phone } from "lucide-react";
 import Link from "next/link";
 import type { Category, Setting } from "@/lib/admin-types";
+import { Stagger, StaggerItem } from "@/components/shared/stagger";
 import { FOOTER_CARE_LINKS, FOOTER_HELP_LINKS } from "@/lib/site-config";
 import { waLink } from "@/lib/wa";
 
@@ -16,8 +17,8 @@ export function SiteFooter({
 
   return (
     <footer className="border-t border-[#EEE7E2] bg-[#FFFDF9]">
-      <div className="container-page grid gap-10 py-12 md:grid-cols-[1.3fr_2fr_1.3fr]">
-        <div>
+      <Stagger className="container-page grid gap-10 py-12 md:grid-cols-[1.3fr_2fr_1.3fr]">
+        <StaggerItem>
           <Link href="/" className="font-serif-display text-4xl leading-none">{settings.companyName}</Link>
           <p className="mt-4 max-w-xs text-sm leading-6 text-[#737373]">
             {settings.tagline || "Katalog produk pilihan kami. Temukan favoritmu dan tanyakan langsung ke tim kami."}
@@ -32,9 +33,9 @@ export function SiteFooter({
             {facebook ? <SocialPill href={`https://facebook.com/${facebook}`}>Facebook</SocialPill> : null}
             {tiktok ? <SocialPill href={`https://tiktok.com/@${tiktok}`}>TikTok</SocialPill> : null}
           </div>
-        </div>
+        </StaggerItem>
 
-        <div className="grid grid-cols-2 gap-6 sm:grid-cols-3">
+        <StaggerItem className="grid grid-cols-2 gap-6 sm:grid-cols-3">
           <FooterCol title="Katalog">
             <FooterLink href="/catalog">Semua Produk</FooterLink>
             {categories.slice(0, 6).map((c) => (
@@ -51,9 +52,9 @@ export function SiteFooter({
               <FooterLink key={l.label} href={l.href}>{l.label}</FooterLink>
             ))}
           </FooterCol>
-        </div>
+        </StaggerItem>
 
-        <div>
+        <StaggerItem>
           <h3 className="text-xs font-bold uppercase tracking-[0.18em]">Hubungi Kami</h3>
           <div className="mt-4 grid gap-3 text-sm text-[#737373]">
             {settings.phone ? <a href={`tel:${settings.phone.replace(/\s/g, "")}`} className="inline-flex items-center gap-2 hover:text-[#A9445A]"><Phone size={16} /> {settings.phone}</a> : null}
@@ -63,8 +64,8 @@ export function SiteFooter({
           <Link href="/contact" className="mt-5 inline-flex rounded-full border border-[#C95F72] px-5 py-2 text-sm font-semibold text-[#A9445A] transition hover:bg-[#FFF1F3]">
             Kirim Pertanyaan
           </Link>
-        </div>
-      </div>
+        </StaggerItem>
+      </Stagger>
       <p className="border-t border-[#EEE7E2] py-5 text-center text-xs text-[#737373]">
         © {year} {settings.companyName}. Hak cipta dilindungi.
       </p>

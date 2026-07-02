@@ -4,14 +4,19 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { CheckCircle2, ChevronLeft, Circle, Loader2, MessageCircle, Truck } from "lucide-react";
 import { getOrder, getTracking, type Order, type TrackingView } from "@/features/orders/api";
 import { TOKEN_COOKIE, ApiError } from "@/lib/api-client";
 import { orderStatusMeta } from "@/lib/order-status";
 import { formatIDR } from "@/lib/format";
+import { premiumEase } from "@/lib/animations";
+import { Reveal } from "@/components/shared/reveal";
+import { Stagger, StaggerItem } from "@/components/shared/stagger";
 
 export function OrderDetailView({ id, whatsapp }: { id: string; whatsapp: string }) {
   const router = useRouter();
+  const reduce = useReducedMotion();
 
   const [justPlaced, setJustPlaced] = useState(false);
   const [order, setOrder] = useState<Order | null>(null);
@@ -39,26 +44,52 @@ export function OrderDetailView({ id, whatsapp }: { id: string; whatsapp: string
     };
   }, [id, router]);
 
-  if (loading) {
-    return (
-      <main className="container-page grid min-h-[40vh] place-items-center py-16">
-        <Loader2 className="animate-spin text-[#C95F72]" />
-      </main>
-    );
-  }
+  const stateKey = loading ? "loading" : error || !order ? "error" : "loaded";
 
-  if (error || !order) {
-    return (
-      <main className="container-page py-16 text-center">
-        <h1 className="font-serif-display text-3xl">Pesanan tidak ditemukan</h1>
-        <p className="mt-2 text-sm text-[#737373]">{error ?? "Pesanan ini tidak tersedia."}</p>
-        <Link href="/orders" className="mt-5 inline-block font-semibold text-[#A9445A] hover:underline">
-          Lihat pesanan saya
-        </Link>
-      </main>
-    );
-  }
+  const content = loading ? (
+    <main className="container-page grid min-h-[40vh] place-items-center py-16">
+      <Loader2 className="animate-spin text-[#C95F72]" />
+    </main>
+  ) : error || !order ? (
+    <main className="container-page py-16 text-center">
+      <h1 className="font-serif-display text-3xl">Pesanan tidak ditemukan</h1>
+      <p className="mt-2 text-sm text-[#737373]">{error ?? "Pesanan ini tidak tersedia."}</p>
+      <Link href="/orders" className="mt-5 inline-block font-semibold text-[#A9445A] hover:underline">
+        Lihat pesanan saya
+      </Link>
+    </main>
+  ) : (
+    <OrderDetailBody order={order} tracking={tracking} justPlaced={justPlaced} whatsapp={whatsapp} />
+  );
 
+  if (reduce) return content;
+
+  return (
+    <AnimatePresence mode="wait">
+      <motion.div
+        key={stateKey}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.25, ease: premiumEase }}
+      >
+        {content}
+      </motion.div>
+    </AnimatePresence>
+  );
+}
+
+function OrderDetailBody({
+  order,
+  tracking,
+  justPlaced,
+  whatsapp,
+}: {
+  order: Order;
+  tracking: TrackingView | null;
+  justPlaced: boolean;
+  whatsapp: string;
+}) {
   const status = orderStatusMeta(order.status);
   const created = new Date(order.createdAt).toLocaleString("id-ID", { dateStyle: "long", timeStyle: "short" });
   const waMessage =
@@ -71,13 +102,13 @@ export function OrderDetailView({ id, whatsapp }: { id: string; whatsapp: string
       </Link>
 
       {justPlaced ? (
-        <div className="mb-6 flex items-start gap-3 rounded-2xl border border-[#CBE6D2] bg-[#EEF8F0] px-4 py-3.5">
+        <Reveal direction="scale" className="mb-6 flex items-start gap-3 rounded-2xl border border-[#CBE6D2] bg-[#EEF8F0] px-4 py-3.5">
           <CheckCircle2 className="mt-0.5 shrink-0 text-[#0E7A53]" size={20} />
           <div>
             <p className="font-semibold text-[#23694A]">Pesanan berhasil dibuat!</p>
             <p className="text-sm text-[#3f6b53]">Simpan nomor pesananmu. Tim kami akan menghubungi untuk konfirmasi pembayaran & pengiriman.</p>
           </div>
-        </div>
+        </Reveal>
       ) : null}
 
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -154,9 +185,9 @@ export function OrderDetailView({ id, whatsapp }: { id: string; whatsapp: string
                   {tracking.courier ? `${tracking.courier} ${tracking.service}` : "Kurir"} · Estimasi {tracking.eta || "—"}. Nomor resi muncul setelah dikirim.
                 </p>
               )}
-              <ol className="mt-4 grid gap-0.5">
+              <Stagger as="ol" className="mt-4 grid gap-0.5">
                 {tracking.events.map((ev, idx) => (
-                  <li key={ev.status} className="flex gap-3">
+                  <StaggerItem as="li" key={ev.status} className="flex gap-3">
                     <span className="flex flex-col items-center">
                       {ev.done ? (
                         <CheckCircle2 size={18} className="text-[#0E7A53]" />
@@ -168,9 +199,9 @@ export function OrderDetailView({ id, whatsapp }: { id: string; whatsapp: string
                       ) : null}
                     </span>
                     <span className={`pb-3 text-sm ${ev.done ? "font-medium text-[#262626]" : "text-[#9B918A]"}`}>{ev.label}</span>
-                  </li>
+                  </StaggerItem>
                 ))}
-              </ol>
+              </Stagger>
             </div>
           ) : null}
 

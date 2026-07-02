@@ -1,6 +1,7 @@
 import { getPublicProducts } from "@/features/public/api";
 import { CatalogCard } from "@/components/catalog/catalog-card";
 import { Reveal } from "@/components/shared/reveal";
+import { Stagger, StaggerItem } from "@/components/shared/stagger";
 import { SectionHeading } from "@/components/shared/section-heading";
 
 export async function NewArrivals() {
@@ -15,19 +16,21 @@ export async function NewArrivals() {
 
   return (
     <section className="container-page py-10">
-      <SectionHeading
-        eyebrow="Jangan lewatkan"
-        title="Jelajahi Lainnya"
-        copy="Lebih banyak pilihan produk untuk melengkapi kebutuhanmu."
-        href="/catalog"
-      />
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+      <Reveal>
+        <SectionHeading
+          eyebrow="Jangan lewatkan"
+          title="Jelajahi Lainnya"
+          copy="Lebih banyak pilihan produk untuk melengkapi kebutuhanmu."
+          href="/catalog"
+        />
+      </Reveal>
+      <Stagger className="grid grid-cols-2 gap-4 md:grid-cols-4">
         {products.slice(0, 8).map((product) => (
-          <Reveal key={product.id}>
+          <StaggerItem key={product.id}>
             <CatalogCard product={product} />
-          </Reveal>
+          </StaggerItem>
         ))}
-      </div>
+      </Stagger>
     </section>
   );
 }

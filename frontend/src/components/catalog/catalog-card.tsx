@@ -3,19 +3,20 @@
 import { Heart } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { useState } from "react";
 import type { Product } from "@/lib/admin-types";
 import { formatIDR } from "@/lib/format";
 import { primaryImage, toWishlistItem } from "@/lib/catalog";
 import { useWishlistStore } from "@/lib/store/wishlist-store";
-import { cardHover } from "@/lib/animations";
+import { hoverLift, imageZoom } from "@/lib/animations";
 
 export function CatalogCard({ product }: { product: Product }) {
   const img = primaryImage(product);
   const toggle = useWishlistStore((s) => s.toggle);
   const wished = useWishlistStore((s) => s.exists(product.id));
   const [pop, setPop] = useState(false);
+  const reduceMotion = useReducedMotion();
 
   function onWishlist(e: React.MouseEvent) {
     e.preventDefault();
@@ -26,18 +27,26 @@ export function CatalogCard({ product }: { product: Product }) {
 
   return (
     <motion.article
-      whileHover={cardHover}
-      className="group relative overflow-hidden rounded-2xl border border-[#EEE7E2] bg-white shadow-[0_12px_36px_rgba(73,45,38,0.035)] transition duration-300 hover:border-[#E8BBC4] hover:shadow-[0_22px_54px_rgba(169,68,90,0.12)]"
+      initial="rest"
+      animate="rest"
+      whileHover={reduceMotion ? undefined : "hover"}
+      variants={{ rest: { y: 0 }, hover: hoverLift }}
+      className="group relative overflow-hidden rounded-2xl border border-[#EEE7E2] bg-white shadow-[0_12px_36px_rgba(73,45,38,0.035)] transition-[box-shadow,border-color] duration-300 hover:border-[#E8BBC4] hover:shadow-[0_22px_54px_rgba(169,68,90,0.12)]"
     >
       <Link href={`/catalog/${product.slug}`} className="block">
         <div className="relative aspect-square overflow-hidden bg-[#FAF4EF]">
-          <Image
-            src={img.url}
-            alt={img.alt}
-            fill
-            sizes="(max-width: 768px) 50vw, 25vw"
-            className="object-cover transition duration-700 group-hover:scale-[1.05]"
-          />
+          <motion.div
+            className="absolute inset-0"
+            variants={{ rest: { scale: 1 }, hover: imageZoom }}
+          >
+            <Image
+              src={img.url}
+              alt={img.alt}
+              fill
+              sizes="(max-width: 768px) 50vw, 25vw"
+              className="object-cover"
+            />
+          </motion.div>
         </div>
       </Link>
       <motion.button

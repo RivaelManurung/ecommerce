@@ -2,14 +2,46 @@
 
 import { Heart, Menu, MessageCircle, Search, ShoppingBag, User, X } from "lucide-react";
 import Link from "next/link";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useEffect, useState } from "react";
 import type { Category, Setting } from "@/lib/admin-types";
 import { useWishlistStore } from "@/lib/store/wishlist-store";
 import { useCartStore } from "@/lib/store/cart-store";
 import { cn } from "@/lib/utils/cn";
 import { waLink } from "@/lib/wa";
-import { drawerPanelVariants, drawerVariants } from "@/lib/animations";
+import {
+  drawerPanelVariants,
+  drawerVariants,
+  premiumEase,
+  staggerContainer,
+  staggerItem,
+} from "@/lib/animations";
+
+/**
+ * Count badge that gently pops each time its value changes. Remounting on the
+ * `count` key restarts the entrance; reduced-motion users get a static badge.
+ */
+function CountBadge({ count }: { count: number }) {
+  const reduceMotion = useReducedMotion();
+  const className =
+    "absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-[#C95F72] px-1 text-[10px] font-bold text-white";
+
+  if (reduceMotion) {
+    return <span className={className}>{count}</span>;
+  }
+
+  return (
+    <motion.span
+      key={count}
+      className={className}
+      initial={{ scale: 0.4, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      transition={{ duration: 0.32, ease: premiumEase }}
+    >
+      {count}
+    </motion.span>
+  );
+}
 
 export function SiteHeader({
   settings,
@@ -23,6 +55,7 @@ export function SiteHeader({
   const wishlistCount = useWishlistStore((state) => state.items.length);
   const cartCount = useCartStore((state) => state.items.reduce((n, i) => n + i.quantity, 0));
   const [authed, setAuthed] = useState(false);
+  const reduceMotion = useReducedMotion();
 
   // Switch the account entry between sign-in and order history after mount
   // (cookie read is client-only; default false keeps SSR/CSR markup in sync).
@@ -113,7 +146,7 @@ export function SiteHeader({
               <span className="block text-[10px] uppercase tracking-[0.16em] text-[#9B918A]">Belanja</span>
               <span className="text-xs font-semibold">Keranjang</span>
             </span>
-            {cartCount ? <span key={cartCount} className="badge-pulse absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-[#C95F72] px-1 text-[10px] font-bold text-white">{cartCount}</span> : null}
+            {cartCount ? <CountBadge count={cartCount} /> : null}
           </Link>
           <Link className="focus-ring group relative flex h-12 items-center gap-2 rounded-full border border-[#EEE7E2] bg-white px-2.5 text-left shadow-[0_10px_24px_rgba(73,45,38,0.05)] transition hover:border-[#E8BBC4] hover:text-[#A9445A]" href="/wishlist" aria-label="Wishlist">
             <span className="grid h-9 w-9 place-items-center rounded-full bg-[#F8DDE2] text-[#A9445A]">
@@ -123,7 +156,7 @@ export function SiteHeader({
               <span className="block text-[10px] uppercase tracking-[0.16em] text-[#9B918A]">Favorit</span>
               <span className="text-xs font-semibold">Wishlist</span>
             </span>
-            {wishlistCount ? <span key={wishlistCount} className="badge-pulse absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-[#C95F72] px-1 text-[10px] font-bold text-white">{wishlistCount}</span> : null}
+            {wishlistCount ? <CountBadge count={wishlistCount} /> : null}
           </Link>
         </div>
       </div>
@@ -161,13 +194,20 @@ export function SiteHeader({
               </div>
               <nav className="flex-1 overflow-y-auto px-6 py-5">
                 <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.16em] text-[#9B918A]">Kategori</p>
-                <div className="grid gap-2 text-sm font-semibold uppercase">
+                <motion.div
+                  className="grid gap-2 text-sm font-semibold uppercase"
+                  variants={reduceMotion ? undefined : staggerContainer}
+                  initial={reduceMotion ? undefined : "hidden"}
+                  animate={reduceMotion ? undefined : "show"}
+                >
                   {nav.map((item) => (
-                    <Link key={item.href} href={item.href} className="rounded-lg border border-[#EEE7E2] bg-white px-4 py-3 transition hover:border-[#E8BBC4] hover:text-[#A9445A]" onClick={() => setOpen(false)}>
-                      {item.label}
-                    </Link>
+                    <motion.div key={item.href} variants={reduceMotion ? undefined : staggerItem}>
+                      <Link href={item.href} className="block rounded-lg border border-[#EEE7E2] bg-white px-4 py-3 transition hover:border-[#E8BBC4] hover:text-[#A9445A]" onClick={() => setOpen(false)}>
+                        {item.label}
+                      </Link>
+                    </motion.div>
                   ))}
-                </div>
+                </motion.div>
               </nav>
               <div className="grid gap-2 border-t border-[#EEE7E2] px-6 py-5">
                 <Link href={accountHref} onClick={() => setOpen(false)} className="inline-flex items-center justify-center gap-2 rounded-lg border border-[#EEE7E2] bg-white px-4 py-3 text-sm font-semibold transition hover:border-[#E8BBC4]">

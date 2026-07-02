@@ -1,11 +1,9 @@
-"use client";
-
 import { ArrowRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { motion } from "framer-motion";
 import { SectionHeading } from "@/components/shared/section-heading";
-import { fadeUp, staggerContainer } from "@/lib/animations";
+import { Reveal } from "@/components/shared/reveal";
+import { Stagger, StaggerItem } from "@/components/shared/stagger";
 
 const concerns = [
   {
@@ -37,10 +35,12 @@ const concerns = [
 export function ShopByConcern() {
   return (
     <section className="container-page py-10">
-      <SectionHeading eyebrow="Shop by need" title="Curated Beauty Edits" copy="Temukan rangkaian produk yang sesuai dengan kebutuhan kulit dan ritme harianmu." />
-      <motion.div className="grid gap-4 md:grid-cols-4" variants={staggerContainer} initial="hidden" whileInView="show" viewport={{ once: true, margin: "-80px" }}>
+      <Reveal>
+        <SectionHeading eyebrow="Shop by need" title="Curated Beauty Edits" copy="Temukan rangkaian produk yang sesuai dengan kebutuhan kulit dan ritme harianmu." />
+      </Reveal>
+      <Stagger className="grid gap-4 md:grid-cols-4">
         {concerns.map((concern) => (
-          <motion.div key={concern.title} variants={fadeUp}>
+          <StaggerItem key={concern.title}>
             <Link href="/catalog" className={`group relative block min-h-44 overflow-hidden rounded-2xl ${concern.color} p-6 shadow-[0_16px_42px_rgba(73,45,38,0.055)] transition hover:-translate-y-1 hover:shadow-[0_22px_55px_rgba(73,45,38,0.095)]`}>
               <div className="relative z-10 max-w-[62%]">
                 <h3 className="text-sm font-bold uppercase tracking-[0.12em]">{concern.title}</h3>
@@ -51,9 +51,9 @@ export function ShopByConcern() {
               </div>
               <Image src={concern.image} alt="" width={180} height={180} className="absolute -bottom-8 -right-4 w-40 transition duration-500 group-hover:scale-105" />
             </Link>
-          </motion.div>
+          </StaggerItem>
         ))}
-      </motion.div>
+      </Stagger>
     </section>
   );
 }

@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Loader2, Lock, Truck } from "lucide-react";
 import { useCartStore } from "@/lib/store/cart-store";
 import { TOKEN_COOKIE, ApiError } from "@/lib/api-client";
@@ -12,6 +13,8 @@ import { checkout, quoteShipping, type CheckoutInput, type ShippingOption } from
 import { validateCoupon } from "@/features/admin-coupons/api";
 import { formatIDR } from "@/lib/format";
 import { cn } from "@/lib/utils/cn";
+import { premiumEase, tapScale } from "@/lib/animations";
+import { Stagger, StaggerItem } from "@/components/shared/stagger";
 
 type FormValues = {
   fullName: string;
@@ -36,6 +39,7 @@ export function CheckoutView() {
   const items = useCartStore((s) => s.items);
   const resetLocal = useCartStore((s) => s.resetLocal);
 
+  const reduce = useReducedMotion();
   const [ready, setReady] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
@@ -170,13 +174,14 @@ export function CheckoutView() {
       <form onSubmit={handleSubmit(onSubmit)} className="mt-8 grid gap-8 lg:grid-cols-[1fr_360px]" noValidate>
         {/* Address + payment */}
         <div className="grid gap-6">
-          {serverError ? (
+          <Collapse show={!!serverError} reduce={reduce}>
             <p role="alert" className="rounded-xl border border-[#E7B2BD] bg-[#FBEEF1] px-4 py-3 text-sm text-[#A9445A]">
               {serverError}
             </p>
-          ) : null}
+          </Collapse>
 
-          <section className="rounded-2xl border border-[#EEE7E2] bg-white p-5">
+          <Stagger className="grid gap-6" as="div">
+          <StaggerItem as="section" className="rounded-2xl border border-[#EEE7E2] bg-white p-5">
             <h2 className="font-serif-display text-2xl">Alamat Pengiriman</h2>
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
               <Field label="Nama Lengkap" error={errors.fullName?.message}>
@@ -204,9 +209,9 @@ export function CheckoutView() {
                 <textarea rows={2} className={inputCls} placeholder="Patokan / instruksi pengiriman" {...register("notes")} />
               </Field>
             </div>
-          </section>
+          </StaggerItem>
 
-          <section className="rounded-2xl border border-[#EEE7E2] bg-white p-5">
+          <StaggerItem as="section" className="rounded-2xl border border-[#EEE7E2] bg-white p-5">
             <div className="flex items-center justify-between gap-3">
               <h2 className="font-serif-display text-2xl">Pengiriman</h2>
               <button
@@ -219,8 +224,10 @@ export function CheckoutView() {
                 Hitung Ongkir
               </button>
             </div>
-            {shippingError ? <p className="mt-3 text-sm text-[#C0445E]">{shippingError}</p> : null}
-            {shippingOptions.length > 0 ? (
+            <Collapse show={!!shippingError} reduce={reduce}>
+              <p className="mt-3 text-sm text-[#C0445E]">{shippingError}</p>
+            </Collapse>
+            <Collapse show={shippingOptions.length > 0} reduce={reduce}>
               <div className="mt-4 grid gap-3">
                 {shippingOptions.map((opt) => {
                   const key = `${opt.courier}-${opt.service}`;
@@ -244,12 +251,13 @@ export function CheckoutView() {
                   );
                 })}
               </div>
-            ) : (
+            </Collapse>
+            {shippingOptions.length === 0 && !shippingError ? (
               <p className="mt-3 text-sm text-[#9B918A]">Isi provinsi & kota lalu klik “Hitung Ongkir” untuk melihat pilihan kurir.</p>
-            )}
-          </section>
+            ) : null}
+          </StaggerItem>
 
-          <section className="rounded-2xl border border-[#EEE7E2] bg-white p-5">
+          <StaggerItem as="section" className="rounded-2xl border border-[#EEE7E2] bg-white p-5">
             <h2 className="font-serif-display text-2xl">Metode Pembayaran</h2>
             <div className="mt-4 grid gap-3">
               {PAYMENT_OPTIONS.map((opt) => (
@@ -266,7 +274,8 @@ export function CheckoutView() {
               Pembayaran online otomatis sedang disiapkan. Untuk saat ini pesanan dibuat dengan status
               <span className="font-medium text-[#7a6a60]"> menunggu pembayaran</span> dan tim kami akan menghubungimu untuk konfirmasi.
             </p>
-          </section>
+          </StaggerItem>
+          </Stagger>
         </div>
 
         {/* Summary */}
@@ -306,13 +315,15 @@ export function CheckoutView() {
                 {couponLoading ? "…" : "Pakai"}
               </button>
             </div>
-            {couponError ? <p className="mt-1.5 text-xs text-[#C0445E]">{couponError}</p> : null}
-            {appliedCoupon ? (
+            <Collapse show={!!couponError} reduce={reduce}>
+              <p className="mt-1.5 text-xs text-[#C0445E]">{couponError}</p>
+            </Collapse>
+            <Collapse show={!!appliedCoupon} reduce={reduce}>
               <p className="mt-1.5 text-xs text-[#0E7A53]">
-                Kupon {appliedCoupon.code} diterapkan: −{formatIDR(appliedCoupon.discount)}{" "}
+                Kupon {appliedCoupon?.code} diterapkan: −{formatIDR(appliedCoupon?.discount ?? 0)}{" "}
                 <button type="button" onClick={() => { setAppliedCoupon(null); setCouponInput(""); }} className="underline">hapus</button>
               </p>
-            ) : null}
+            </Collapse>
           </div>
 
           <dl className="mt-4 grid gap-2 border-t border-[#EEE7E2] pt-4 text-sm">
@@ -331,14 +342,15 @@ export function CheckoutView() {
             <span className="font-semibold">Total</span>
             <span className="text-xl font-bold text-[#C95F72]">{formatIDR(total)}</span>
           </div>
-          <button
+          <motion.button
             type="submit"
             disabled={submitting || count === 0}
+            whileTap={reduce ? undefined : tapScale}
             className="focus-ring mt-5 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md bg-[#C95F72] px-6 text-sm font-semibold text-white transition hover:bg-[#A9445A] disabled:cursor-not-allowed disabled:opacity-50"
           >
             {submitting ? <Loader2 size={17} className="animate-spin" /> : <Lock size={16} />}
             {submitting ? "Memproses…" : "Buat Pesanan"}
-          </button>
+          </motion.button>
           <Link href="/cart" className="focus-ring mt-3 inline-flex w-full items-center justify-center text-sm font-medium text-[#A9445A] hover:underline">
             Kembali ke keranjang
           </Link>
@@ -350,6 +362,40 @@ export function CheckoutView() {
 
 const inputCls =
   "h-11 w-full rounded-xl border border-[#E4DBD5] bg-white px-3.5 text-sm text-[#262626] outline-none transition focus:border-[#C95F72] focus:ring-2 focus:ring-[#C95F72]/20 placeholder:text-[#B8AFA9]";
+
+/**
+ * Collapse smoothly reveals/hides an appearing block (shipping quote, coupon
+ * result, server error) via height + opacity. Honors prefers-reduced-motion by
+ * toggling instantly.
+ */
+function Collapse({
+  show,
+  reduce,
+  children,
+  className,
+}: {
+  show: boolean;
+  reduce: boolean | null;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <AnimatePresence initial={false}>
+      {show ? (
+        <motion.div
+          key="collapse"
+          initial={reduce ? false : { opacity: 0, height: 0 }}
+          animate={reduce ? {} : { opacity: 1, height: "auto" }}
+          exit={reduce ? {} : { opacity: 0, height: 0 }}
+          transition={{ duration: 0.3, ease: premiumEase }}
+          className={cn("overflow-hidden", className)}
+        >
+          {children}
+        </motion.div>
+      ) : null}
+    </AnimatePresence>
+  );
+}
 
 function Field({
   label,

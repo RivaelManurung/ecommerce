@@ -3,10 +3,11 @@
 import { ArrowRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { Reveal } from "@/components/shared/reveal";
 
 export function RoutineBanner() {
+  const prefersReducedMotion = useReducedMotion();
   return (
     <section className="container-page py-8">
       <Reveal>
@@ -23,8 +24,8 @@ export function RoutineBanner() {
             </div>
             <motion.div
               className="relative min-h-[250px]"
-              animate={{ y: [0, -8, 0] }}
-              transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+              animate={prefersReducedMotion ? undefined : { y: [0, -8, 0] }}
+              transition={prefersReducedMotion ? undefined : { duration: 5, repeat: Infinity, ease: "easeInOut" }}
             >
               <Image src="/images/product-cosmetics.svg" alt="Veloura skincare routine" width={260} height={260} className="absolute bottom-0 left-8 w-52 rounded-3xl shadow-xl md:w-64" />
               <Image src="/images/product-cushion.svg" alt="Veloura cushion routine" width={210} height={210} className="absolute right-10 top-0 w-40 rounded-full shadow-xl md:w-52" />

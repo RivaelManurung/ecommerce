@@ -4,17 +4,21 @@ import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { AlertCircle, ChevronRight, Loader2, PackageX } from "lucide-react";
 import { getMyOrders, type Order } from "@/features/orders/api";
 import { ApiError, TOKEN_COOKIE } from "@/lib/api-client";
 import { orderStatusMeta } from "@/lib/order-status";
 import { formatIDR } from "@/lib/format";
+import { premiumEase } from "@/lib/animations";
+import { Stagger, StaggerItem } from "@/components/shared/stagger";
 
 export function OrdersView() {
   const router = useRouter();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const reduce = useReducedMotion();
 
   const load = useCallback(() => {
     setLoading(true);
@@ -37,16 +41,13 @@ export function OrdersView() {
     return () => clearTimeout(t);
   }, [router, load]);
 
-  if (loading) {
-    return (
-      <main className="container-page grid min-h-[40vh] place-items-center py-16">
-        <Loader2 className="animate-spin text-[#C95F72]" />
-      </main>
-    );
-  }
+  const stateKey = loading ? "loading" : error ? "error" : orders.length === 0 ? "empty" : "list";
 
-  if (error) {
-    return (
+  const content = loading ? (
+    <main className="container-page grid min-h-[40vh] place-items-center py-16">
+      <Loader2 className="animate-spin text-[#C95F72]" />
+    </main>
+  ) : error ? (
       <main className="container-page py-16">
         <div className="mx-auto grid max-w-md place-items-center gap-5 text-center">
           <span className="grid h-20 w-20 place-items-center rounded-full bg-[#FBEEF1] text-[#C0445E]">
@@ -63,11 +64,7 @@ export function OrdersView() {
           </button>
         </div>
       </main>
-    );
-  }
-
-  if (orders.length === 0) {
-    return (
+  ) : orders.length === 0 ? (
       <main className="container-page py-16">
         <div className="mx-auto grid max-w-md place-items-center gap-5 text-center">
           <span className="grid h-20 w-20 place-items-center rounded-full bg-[#FAF4EF] text-[#C95F72]">
@@ -80,21 +77,18 @@ export function OrdersView() {
           </Link>
         </div>
       </main>
-    );
-  }
-
-  return (
+  ) : (
     <main className="container-page py-8 md:py-12">
       <h1 className="font-serif-display text-4xl leading-none">Pesanan Saya</h1>
       <p className="mt-2 text-sm text-[#737373]">{orders.length} pesanan</p>
 
-      <ul className="mt-7 grid gap-3">
+      <Stagger as="ul" className="mt-7 grid gap-3">
         {orders.map((order) => {
           const status = orderStatusMeta(order.status);
           const created = new Date(order.createdAt).toLocaleDateString("id-ID", { dateStyle: "medium" });
           const count = order.items.reduce((n, i) => n + i.quantity, 0);
           return (
-            <li key={order.id}>
+            <StaggerItem as="li" key={order.id}>
               <Link
                 href={`/orders/${order.id}`}
                 className="focus-ring flex items-center gap-4 rounded-2xl border border-[#EEE7E2] bg-white p-4 transition hover:border-[#E8BBC4] hover:shadow-[0_10px_24px_rgba(73,45,38,0.05)]"
@@ -118,10 +112,26 @@ export function OrdersView() {
                 </div>
                 <ChevronRight size={18} className="text-[#B8AFA9]" />
               </Link>
-            </li>
+            </StaggerItem>
           );
         })}
-      </ul>
+      </Stagger>
     </main>
+  );
+
+  if (reduce) return content;
+
+  return (
+    <AnimatePresence mode="wait">
+      <motion.div
+        key={stateKey}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.25, ease: premiumEase }}
+      >
+        {content}
+      </motion.div>
+    </AnimatePresence>
   );
 }
